@@ -11,12 +11,10 @@ services:
   miniclaw-gateway:
     container_name: miniclaw-gateway
     <<: *common-config
-    entrypoint: ["python", "/app/miniclaw/cli/launcher.py"]
-    command: []
+    command: ["gateway"]
     restart: unless-stopped
     ports:
       - 18790:18790
-      - 18801:18801
     deploy:
       resources:
         limits:
@@ -25,6 +23,15 @@ services:
         reservations:
           cpus: '0.25'
           memory: 256M
+
+  miniclaw-launcher:
+    container_name: miniclaw-launcher
+    <<: *common-config
+    entrypoint: ["python", "/app/miniclaw/cli/launcher.py"]
+    command: []
+    restart: unless-stopped
+    ports:
+      - 18801:18801
 
   miniclaw-cli:
     <<: *common-config

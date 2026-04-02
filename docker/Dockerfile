@@ -20,6 +20,9 @@ RUN git clone https://github.com/tringv8/miniclaw.git .
 # Install Python dependencies (editable so launcher finds source tree)
 RUN uv pip install --system -e .
 
+# Install launcher web dependencies
+RUN uv pip install --system -r web/frontend_python_codex/requirements.txt
+
 WORKDIR /app/bridge
 RUN npm install && npm run build
 WORKDIR /app
@@ -27,8 +30,8 @@ WORKDIR /app
 # Create config directory
 RUN mkdir -p /root/.miniclaw
 
-# Gateway default port
-EXPOSE 18790
+# Gateway + Launcher ports
+EXPOSE 18790 18801
 
 ENTRYPOINT ["miniclaw"]
 CMD ["status"]
