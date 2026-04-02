@@ -17,8 +17,8 @@ WORKDIR /app
 # Clone miniclaw source
 RUN git clone https://github.com/tringv8/miniclaw.git .
 
-# Install Python dependencies
-RUN uv pip install --system --no-cache .
+# Install Python dependencies (editable so launcher finds source tree)
+RUN uv pip install --system -e .
 
 WORKDIR /app/bridge
 RUN npm install && npm run build
