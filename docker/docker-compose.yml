@@ -11,7 +11,8 @@ services:
   miniclaw-gateway:
     container_name: miniclaw-gateway
     <<: *common-config
-    command: ["gateway"]
+    entrypoint: ["python", "/app/miniclaw/cli/launcher.py"]
+    command: []
     restart: unless-stopped
     ports:
       - 18790:18790
