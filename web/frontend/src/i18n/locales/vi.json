@@ -1,0 +1,548 @@
+{
+  "navigation": {
+    "chat": "Trò chuyện",
+    "model_group": "Mô hình",
+    "models": "Mô hình",
+    "credentials": "Thông tin xác thực",
+    "agent_group": "Tác nhân",
+    "skills": "Kỹ năng",
+    "tools": "Công cụ",
+    "services": "Dịch vụ",
+    "channels_group": "Kênh",
+    "show_more_channels": "Thêm",
+    "show_less_channels": "Thu gọn",
+    "config": "Cấu hình",
+    "logs": "Nhật ký"
+  },
+  "launcherLogin": {
+    "title": "Truy cập launcher",
+    "description": "Đăng nhập bằng token truy cập dashboard của tiến trình launcher này (token có thể thay đổi sau mỗi lần khởi động lại nếu bạn không ghim nó bằng biến môi trường).",
+    "tokenLabel": "Token",
+    "tokenPlaceholder": "Nhập token truy cập",
+    "submit": "Tiếp tục vào Dashboard",
+    "errorInvalid": "Token không hợp lệ. Vui lòng thử lại.",
+    "errorNetwork": "Lỗi mạng. Vui lòng thử lại.",
+    "helpTitle": "Tìm token ở đâu",
+    "helpConsole": "Chế độ console: được in ra terminal khi launcher khởi động.",
+    "helpTray": "Chế độ khay hệ thống: menu \"Copy dashboard token\".",
+    "helpLogFile": "Tệp log (dòng khởi động có chứa token): {{path}}",
+    "helpEnv": "Token cố định: đặt {{env}}."
+  },
+  "chat": {
+    "welcome": "Hôm nay tôi có thể giúp gì cho bạn?",
+    "welcomeDesc": "Hãy hỏi tôi về thời tiết, cài đặt hoặc bất kỳ tác vụ nào khác. Tôi luôn sẵn sàng hỗ trợ bạn.",
+    "placeholder": "Bắt đầu một tin nhắn mới...\nNhấn Enter để gửi, Shift + Enter để xuống dòng",
+    "newChat": "Cuộc trò chuyện mới",
+    "notConnected": "Gateway chưa chạy. Hãy khởi động để bắt đầu trò chuyện.",
+    "thinking": {
+      "step1": "Đang suy nghĩ...",
+      "step2": "Đang phân tích yêu cầu của bạn...",
+      "step3": "Đang chuẩn bị phản hồi...",
+      "step4": "Sắp xong rồi..."
+    },
+    "history": "Lịch sử",
+    "noHistory": "Chưa có lịch sử trò chuyện",
+    "historyLoadFailed": "Không thể tải lịch sử trò chuyện",
+    "historyOpenFailed": "Không thể mở lịch sử trò chuyện này",
+    "loadingMore": "Đang tải thêm...",
+    "deleteSession": "Xóa phiên",
+    "messagesCount": "{{count}} tin nhắn",
+    "noModel": "Chọn mô hình",
+    "empty": {
+      "noConfiguredModel": "Chưa cấu hình mô hình",
+      "noConfiguredModelDescription": "Bạn cần cấu hình ít nhất một mô hình AI có khóa API trước khi có thể bắt đầu trò chuyện.",
+      "goToModels": "Đi tới Mô hình",
+      "noSelectedModel": "Chưa chọn mô hình",
+      "noSelectedModelDescription": "Bạn đã cấu hình mô hình, nhưng chưa đặt mô hình mặc định. Hãy chọn một mô hình trước khi bắt đầu trò chuyện.",
+      "notRunning": "Gateway chưa chạy",
+      "notRunningDescription": "Hãy khởi động dịch vụ gateway để bắt đầu trò chuyện. Dùng nút Khởi động Gateway ở thanh trên cùng."
+    },
+    "modelGroup": {
+      "apikey": "Khóa API",
+      "oauth": "OAuth",
+      "local": "Cục bộ"
+    }
+  },
+  "header": {
+    "gateway": {
+      "stopDialog": {
+        "title": "Dừng dịch vụ Gateway?",
+        "description": "Bạn có chắc muốn dừng gateway không? Thao tác này sẽ ngắt các phiên trò chuyện đang hoạt động và dừng suy luận.",
+        "confirm": "Dừng Gateway"
+      },
+      "action": {
+        "start": "Khởi động Gateway",
+        "stop": "Dừng Gateway",
+        "restart": "Khởi động lại Gateway"
+      },
+      "status": {
+        "starting": "Đang khởi động Gateway...",
+        "restarting": "Đang khởi động lại Gateway...",
+        "stopping": "Đang dừng Gateway..."
+      },
+      "restartRequired": "Các thay đổi cấu hình cần khởi động lại gateway mới có hiệu lực."
+    }
+  },
+  "common": {
+    "cancel": "Hủy",
+    "save": "Lưu",
+    "saving": "Đang lưu...",
+    "reset": "Đặt lại",
+    "confirm": "Xác nhận"
+  },
+  "labels": {
+    "loading": "Đang tải..."
+  },
+  "credentials": {
+    "description": "Quản lý OAuth và thông tin xác thực dựa trên token cho các nhà cung cấp được hỗ trợ.",
+    "loading": "Đang tải thông tin xác thực...",
+    "providers": {
+      "openai": {
+        "description": "Hỗ trợ OAuth qua trình duyệt, mã thiết bị và đăng nhập bằng token."
+      },
+      "anthropic": {
+        "description": "Dùng đăng nhập bằng token để truy cập Claude."
+      },
+      "antigravity": {
+        "description": "Dùng OAuth qua trình duyệt cho Google Cloud Code Assist."
+      }
+    },
+    "status": {
+      "connected": "Đã kết nối",
+      "needsRefresh": "Cần làm mới",
+      "expired": "Đã hết hạn",
+      "notLoggedIn": "Chưa đăng nhập"
+    },
+    "actions": {
+      "browser": "OAuth trên trình duyệt",
+      "deviceCode": "Mã thiết bị",
+      "stopLoading": "Dừng tải",
+      "saveToken": "Lưu",
+      "logout": "Đăng xuất"
+    },
+    "logoutDialog": {
+      "title": "Đăng xuất nhà cung cấp?",
+      "description": "Thao tác này sẽ xóa thông tin xác thực đã lưu cho {{provider}}."
+    },
+    "fields": {
+      "openaiToken": "Token OpenAI",
+      "anthropicToken": "Token Anthropic"
+    },
+    "labels": {
+      "account": "Tài khoản",
+      "email": "Email",
+      "project": "Dự án"
+    },
+    "errors": {
+      "loadFailed": "Không thể tải thông tin xác thực",
+      "flowFailed": "Không thể kiểm tra luồng xác thực",
+      "loginFailed": "Đăng nhập thất bại",
+      "logoutFailed": "Đăng xuất thất bại",
+      "invalidBrowserResponse": "Phản hồi đăng nhập trình duyệt không hợp lệ",
+      "invalidDeviceResponse": "Phản hồi mã thiết bị không hợp lệ",
+      "popupBlocked": "Không thể mở tab mới. Hãy cho phép popup và thử lại."
+    },
+    "flow": {
+      "current": "Trạng thái xác thực hiện tại",
+      "pending": "Đang chờ xác thực...",
+      "success": "Xác thực thành công",
+      "error": "Xác thực thất bại",
+      "expired": "Phiên xác thực đã hết hạn"
+    },
+    "device": {
+      "title": "Đăng nhập OpenAI bằng mã thiết bị",
+      "description": "Mở trang xác minh và nhập mã bên dưới. Trang này sẽ tự động làm mới.",
+      "code": "Mã người dùng",
+      "url": "URL xác minh",
+      "polling": "Đang kiểm tra trạng thái đăng nhập...",
+      "open": "Mở trang xác minh"
+    }
+  },
+  "models": {
+    "description": "Cấu hình khóa API cho các nhà cung cấp AI. Chỉ các mô hình đã cấu hình mới có thể dùng để trò chuyện.",
+    "loadError": "Không thể tải mô hình",
+    "noDefaultHintPrefix": "Chưa có mô hình mặc định. Nhấn",
+    "noDefaultHintSuffix": "để đặt một mô hình.",
+    "status": {
+      "configured": "Đã cấu hình",
+      "unconfigured": "Chưa cấu hình"
+    },
+    "badge": {
+      "default": "Mặc định",
+      "virtual": "Ảo"
+    },
+    "action": {
+      "edit": "Sửa khóa API",
+      "setDefault": "Đặt làm mặc định",
+      "delete": "Xóa mô hình"
+    },
+    "defaultOnSave": {
+      "label": "Mô hình mặc định",
+      "description": "Tự động đặt mô hình này làm mặc định sau khi lưu."
+    },
+    "add": {
+      "button": "Thêm mô hình",
+      "title": "Thêm mô hình tùy chỉnh",
+      "description": "Thêm một endpoint mô hình gốc hoặc tương thích OpenAI.",
+      "modelName": "Bí danh mô hình",
+      "modelNamePlaceholder": "ví dụ: my-gpt4",
+      "modelNameHint": "Tên ngắn dùng để nhận diện mô hình này trong các cuộc hội thoại.",
+      "modelId": "Mã định danh mô hình",
+      "modelIdPlaceholder": "ví dụ: openai/gpt-4o",
+      "modelIdHint": "Định dạng: protocol/model-id. Hỗ trợ: openai, anthropic, gemini, groq, ...",
+      "errorRequired": "Trường này là bắt buộc.",
+      "errorDuplicateModelName": "Bí danh mô hình đã tồn tại. Vui lòng dùng tên khác.",
+      "saveError": "Không thể thêm mô hình",
+      "confirm": "Thêm mô hình"
+    },
+    "delete": {
+      "title": "Xóa mô hình?",
+      "description": "\"{{name}}\" sẽ bị xóa vĩnh viễn khỏi danh sách mô hình của bạn. Hành động này không thể hoàn tác.",
+      "confirm": "Xóa"
+    },
+    "advanced": {
+      "toggle": "Tùy chọn nâng cao"
+    },
+    "field": {
+      "apiBase": "URL gốc API",
+      "apiKey": "Khóa API",
+      "apiKeyPlaceholder": "Nhập khóa API của bạn",
+      "apiKeyPlaceholderSet": "Để trống để giữ khóa hiện tại",
+      "proxy": "HTTP Proxy",
+      "proxyHint": "Không bắt buộc. Ví dụ: http://127.0.0.1:7890",
+      "authMethod": "Phương thức xác thực",
+      "authMethodHint": "Phương thức xác thực: oauth, token. Để trống để dùng xác thực bằng khóa API.",
+      "connectMode": "Chế độ kết nối",
+      "connectModeHint": "Chế độ kết nối cho các nhà cung cấp dựa trên CLI: stdio hoặc grpc.",
+      "workspace": "Đường dẫn workspace",
+      "workspaceHint": "Thư mục làm việc cho các nhà cung cấp dựa trên CLI (ví dụ: GitHub Copilot).",
+      "requestTimeout": "Thời gian chờ yêu cầu (giây)",
+      "requestTimeoutHint": "Số giây tối đa để chờ phản hồi. 0 = dùng mặc định.",
+      "rpm": "Giới hạn tốc độ (RPM)",
+      "rpmHint": "Số yêu cầu tối đa mỗi phút. 0 = không giới hạn.",
+      "thinkingLevel": "Mức suy luận",
+      "thinkingLevelHint": "Ngân sách suy luận mở rộng: off, low, medium, high, xhigh, adaptive.",
+      "maxTokensField": "Trường Max Tokens",
+      "maxTokensFieldHint": "Ghi đè tên trường request cho max tokens, ví dụ: max_completion_tokens.",
+      "extraBody": "Nội dung body bổ sung",
+      "extraBodyHint": "Các trường JSON bổ sung để chèn vào body request, ví dụ: {\"reasoning_split\": true}."
+    },
+    "edit": {
+      "title": "Cấu hình {{name}}",
+      "apiKeyHint": "Đã có khóa được thiết lập. Để trống để giữ nguyên.",
+      "oauthNote": "Nhà cung cấp này dùng OAuth - không cần khóa API.",
+      "saveError": "Không thể lưu"
+    }
+  },
+  "channels": {
+    "loadError": "Không thể tải danh sách kênh",
+    "edit": "Cấu hình {{name}}",
+    "status": {
+      "configured": "Đã cấu hình"
+    },
+    "name": {
+      "telegram": "Telegram",
+      "web": "Web",
+      "discord": "Discord",
+      "slack": "Slack",
+      "feishu": "Feishu",
+      "dingtalk": "DingTalk",
+      "line": "LINE",
+      "qq": "QQ",
+      "onebot": "OneBot",
+      "wecom": "WeCom",
+      "whatsapp": "WhatsApp",
+      "whatsapp_native": "WhatsApp Native",
+      "maixcam": "MaixCam",
+      "matrix": "Matrix",
+      "irc": "IRC",
+      "weixin": "WeChat"
+    },
+    "weixin": {
+      "warningTitle": "Đang trong giai đoạn thử nghiệm, hãy dùng cẩn thận",
+      "warningDesc": "Kênh WeChat vẫn còn thử nghiệm và có thể có rủi ro khóa tài khoản. Chỉ dùng nếu bạn hiểu và chấp nhận rủi ro này.",
+      "bindTitle": "Liên kết tài khoản WeChat",
+      "bindDesc": "Quét mã QR bằng WeChat để liên kết tài khoản cá nhân của bạn.",
+      "bind": "Liên kết WeChat",
+      "rebind": "Liên kết lại",
+      "bound": "Đã liên kết WeChat",
+      "notBound": "Tài khoản WeChat vẫn chưa được liên kết.",
+      "generating": "Đang tạo mã QR...",
+      "scanHint": "Mở WeChat và quét mã QR",
+      "scanned": "Đã quét - vui lòng xác nhận trong WeChat",
+      "expired": "Mã QR đã hết hạn",
+      "retry": "Thử lại",
+      "refresh": "Làm mới mã QR",
+      "errorGeneric": "Đã xảy ra lỗi. Vui lòng thử lại."
+    },
+    "wecom": {
+      "bindTitle": "Liên kết WeCom",
+      "bindDesc": "Quét mã QR bằng WeCom để liên kết AI Bot của bạn.",
+      "enableDesc": "Sau khi liên kết, bạn có thể bật hoặc tắt kênh tại đây.",
+      "enableBindFirst": "Hãy liên kết bot trước, rồi mới bật kênh.",
+      "bind": "Liên kết WeCom",
+      "rebind": "Liên kết lại",
+      "bound": "Đã liên kết WeCom",
+      "notBound": "AI Bot WeCom vẫn chưa được liên kết.",
+      "generating": "Đang tạo mã QR...",
+      "scanHint": "Mở WeCom và quét mã QR",
+      "scanned": "Đã quét, vui lòng xác nhận trong WeCom",
+      "expired": "Mã QR đã hết hạn",
+      "retry": "Thử lại",
+      "refresh": "Làm mới mã QR",
+      "errorGeneric": "Đã xảy ra lỗi. Vui lòng thử lại."
+    },
+    "field": {
+      "token": "Bot Token",
+      "tokenPlaceholder": "Nhập bot token",
+      "botToken": "Bot Token",
+      "appToken": "App Token",
+      "appId": "App ID",
+      "appSecret": "App Secret",
+      "verificationToken": "Verification Token",
+      "encryptKey": "Khóa mã hóa",
+      "baseUrl": "URL gốc API",
+      "proxy": "HTTP Proxy",
+      "mentionOnly": "Chỉ khi được nhắc tên",
+      "typingEnabled": "Hiển thị đang nhập",
+      "placeholderEnabled": "Tin nhắn tạm thời",
+      "placeholderText": "Nội dung tạm thời",
+      "groupTriggerMentionOnly": "Trong nhóm chỉ phản hồi khi được nhắc tên",
+      "groupTriggerPrefixes": "Tiền tố kích hoạt trong nhóm",
+      "isLark": "Lark (quốc tế)",
+      "allowFrom": "Cho phép từ",
+      "allowFromPlaceholder": "ví dụ: 123456, 789012",
+      "allowOrigins": "Origin được phép",
+      "allowOriginsPlaceholder": "ví dụ: https://example.com, http://localhost:5173",
+      "secretPlaceholder": "Nhập secret",
+      "secretHintSet": "Đã có giá trị được thiết lập. Để trống để giữ nguyên."
+    },
+    "page": {
+      "notFound": "Kênh \"{{name}}\" không được hỗ trợ.",
+      "saveSuccess": "Đã lưu cấu hình kênh.",
+      "saveError": "Không thể lưu cấu hình kênh",
+      "enabled": "đã bật",
+      "docLink": "Tài liệu",
+      "enableLabel": "Bật kênh",
+      "restartRequiredTitle": "Cần khởi động lại gateway",
+      "restartRequiredDesc": "Cấu hình mới nhất của {{name}} đã được lưu. Hãy khởi động lại gateway để áp dụng."
+    },
+    "form": {
+      "desc": {
+        "token": "Bot access token dùng để kết nối tới API của nền tảng.",
+        "botToken": "Bot token dùng để gửi và nhận tin nhắn.",
+        "appToken": "App token dùng cho kết nối Socket Mode.",
+        "appId": "Mã định danh ứng dụng duy nhất dùng cho xác thực.",
+        "appSecret": "App secret dùng cho ký và xác thực.",
+        "verificationToken": "Verification token cho callback sự kiện.",
+        "encryptKey": "Khóa mã hóa dùng để giải mã payload callback.",
+        "baseUrl": "URL gốc API của nền tảng. Mặc định sẽ dùng endpoint chính thức.",
+        "proxy": "Địa chỉ HTTP proxy cho kết nối mạng đi ra ngoài.",
+        "mentionOnly": "Chỉ phản hồi khi bot được nhắc tên trực tiếp trong nhóm.",
+        "typingEnabled": "Hiển thị trạng thái đang nhập khi trợ lý đang tạo phản hồi.",
+        "placeholderEnabled": "Bật tin nhắn tạm thời trước khi gửi phản hồi cuối cùng.",
+        "groupTriggerMentionOnly": "Trong nhóm, chỉ phản hồi khi bot được nhắc tên.",
+        "groupTriggerPrefixes": "Các tiền tố kích hoạt tùy chỉnh trong nhóm, phân tách bằng dấu phẩy.",
+        "isLark": "Dùng domain quốc tế của Lark (open.larksuite.com) thay vì domain Feishu (open.feishu.cn).",
+        "allowFrom": "ID người dùng hoặc nhóm được phép, phân tách bằng dấu phẩy.",
+        "allowOrigins": "Các domain origin được phép, phân tách bằng dấu phẩy.",
+        "wsUrl": "URL dịch vụ WebSocket.",
+        "reconnectInterval": "Khoảng thời gian kết nối lại sau khi mất kết nối (giây).",
+        "bridgeUrl": "URL dịch vụ bridge.",
+        "sessionStorePath": "Đường dẫn cục bộ để lưu session.",
+        "useNative": "Có dùng chế độ client native hay không.",
+        "host": "Địa chỉ host của dịch vụ.",
+        "port": "Cổng dịch vụ.",
+        "homeserver": "URL homeserver của Matrix.",
+        "userId": "User ID của tài khoản.",
+        "deviceId": "Device ID.",
+        "joinOnInvite": "Tự động tham gia phòng khi được mời.",
+        "clientId": "Client ID dùng để xác thực với nền tảng.",
+        "corpId": "Corp ID của doanh nghiệp.",
+        "agentId": "Agent ID của ứng dụng doanh nghiệp.",
+        "webhookUrl": "URL webhook đầy đủ.",
+        "webhookHost": "Host lắng nghe webhook.",
+        "webhookPort": "Cổng lắng nghe webhook.",
+        "webhookPath": "Đường dẫn route của webhook.",
+        "replyTimeout": "Thời gian chờ phản hồi tính bằng giây.",
+        "maxSteps": "Số bước xử lý tối đa.",
+        "welcomeMessage": "Nội dung lời chào cho phiên mới.",
+        "allowTokenQuery": "Cho phép token trong query URL.",
+        "pingInterval": "Khoảng thời gian heartbeat của kết nối tính bằng giây.",
+        "readTimeout": "Thời gian chờ đọc tính bằng giây.",
+        "writeTimeout": "Thời gian chờ ghi tính bằng giây.",
+        "maxConnections": "Số lượng kết nối đồng thời tối đa.",
+        "server": "Địa chỉ máy chủ IRC.",
+        "tls": "Có bật TLS hay không.",
+        "nick": "Biệt danh của bot.",
+        "user": "Tên người dùng IRC.",
+        "realName": "Tên hiển thị thực.",
+        "channels": "Các kênh IRC cần tham gia.",
+        "requestCaps": "Danh sách capability IRC được yêu cầu khi kết nối.",
+        "maxBase64FileSizeMiB": "Kích thước tối đa tính bằng MiB để chuyển tệp cục bộ sang base64 trước khi tải lên. 0 nghĩa là không giới hạn. Chỉ áp dụng cho tệp cục bộ, không áp dụng cho upload bằng URL.",
+        "genericField": "Dùng để cấu hình {{field}}."
+      }
+    },
+    "validation": {
+      "requiredField": "Trường này là bắt buộc."
+    }
+  },
+  "pages": {
+    "agent": {
+      "load_error": "Không thể tải thông tin hỗ trợ tác nhân.",
+      "skills": {
+        "description": "Các kỹ năng được nạp từ workspace, thư mục Miniclaw toàn cục và các thư mục tích hợp sẵn.",
+        "empty": "Hiện chưa có kỹ năng nào.",
+        "import": "Nhập kỹ năng",
+        "import_success": "Đã nhập kỹ năng.",
+        "import_error": "Không thể nhập kỹ năng.",
+        "view": "Xem",
+        "delete": "Xóa",
+        "delete_title": "Xóa kỹ năng?",
+        "delete_description": "\"{{name}}\" sẽ bị xóa khỏi kỹ năng của workspace.",
+        "delete_confirm": "Xóa",
+        "delete_success": "Đã xóa kỹ năng.",
+        "delete_error": "Không thể xóa kỹ năng.",
+        "viewer_title": "Nội dung kỹ năng",
+        "viewer_description": "Đọc nội dung SKILL.md đang có hiệu lực tại đây.",
+        "loading_detail": "Đang tải nội dung kỹ năng...",
+        "load_detail_error": "Không thể tải nội dung kỹ năng.",
+        "path": "Đường dẫn kỹ năng",
+        "no_description": "Không có mô tả."
+      },
+      "tools": {
+        "description": "Màn hình này phản ánh trạng thái mỗi công cụ của tác nhân: đang bật, đang tắt hoặc bị chặn do thiếu điều kiện cần.",
+        "empty": "Không có công cụ nào.",
+        "enable": "Bật",
+        "disable": "Tắt",
+        "enable_success": "Đã bật công cụ.",
+        "disable_success": "Đã tắt công cụ.",
+        "toggle_error": "Không thể cập nhật trạng thái công cụ.",
+        "config_key": "Được điều khiển bởi tools.{{key}}",
+        "status": {
+          "enabled": "Đã bật",
+          "disabled": "Đã tắt",
+          "blocked": "Bị chặn"
+        },
+        "categories": {
+          "automation": "Tự động hóa",
+          "filesystem": "Hệ thống tệp",
+          "web": "Web",
+          "communication": "Liên lạc",
+          "skills": "Kỹ năng",
+          "agents": "Tác nhân",
+          "hardware": "Phần cứng",
+          "discovery": "Khám phá"
+        },
+        "reasons": {
+          "requires_linux": "Công cụ này chỉ hoạt động trên máy Linux với các tệp thiết bị cần thiết đã được mở quyền.",
+          "requires_skills": "Hãy bật `tools.skills` trước khi có thể dùng công cụ đăng ký kỹ năng này.",
+          "requires_subagent": "Hãy bật `tools.subagent` trước khi công cụ spawn có thể giao việc.",
+          "requires_mcp_discovery": "Hãy bật `tools.mcp.discovery` trước khi các công cụ khám phá MCP khả dụng."
+        }
+      }
+    },
+    "config": {
+      "load_error": "Không thể tải cấu hình. Hãy làm mới trang và thử lại.",
+      "workspace": "Thư mục Workspace",
+      "workspace_hint": "Thư mục gốc cho các thao tác tệp của tác nhân.",
+      "restrict_workspace": "Giới hạn trong Workspace",
+      "restrict_workspace_hint": "Chỉ cho phép thao tác tệp bên trong workspace.",
+      "split_on_marker": "Chế độ trò chuyện tự nhiên",
+      "split_on_marker_hint": "Tách tin nhắn dài thành các tin ngắn như cách con người trò chuyện.",
+      "tool_feedback_enabled": "Phản hồi công cụ",
+      "tool_feedback_enabled_hint": "Gửi một bản xem trước ngắn của lời gọi công cụ vào cuộc trò chuyện hiện tại trước mỗi lần thực thi công cụ.",
+      "tool_feedback_max_args_length": "Độ dài xem trước đối số của phản hồi công cụ",
+      "tool_feedback_max_args_length_hint": "Số ký tự đối số tối đa được hiển thị trong mỗi tin nhắn phản hồi công cụ. Đặt 0 để dùng mặc định.",
+      "exec_enabled": "Cho phép chạy lệnh",
+      "exec_enabled_hint": "Bật hoặc tắt thực thi lệnh cho ứng dụng. Khi tắt, mọi yêu cầu chạy lệnh sẽ không được thực hiện.",
+      "allow_remote": "Cho phép chạy lệnh từ xa",
+      "allow_remote_hint": "Khi bật, các phiên từ xa hoặc ngữ cảnh không cục bộ cũng có thể chạy lệnh. Khi tắt, việc thực thi lệnh chỉ giới hạn trong các ngữ cảnh cục bộ an toàn.",
+      "enable_deny_patterns": "Bật danh sách chặn",
+      "enable_deny_patterns_hint": "Khi bật, ứng dụng sẽ chặn các lệnh khớp với các mẫu nguy hiểm tích hợp sẵn và danh sách đen lệnh tùy chỉnh bên dưới.",
+      "exec_timeout_seconds": "Thời gian chờ lệnh (giây)",
+      "exec_timeout_seconds_hint": "Thời gian chạy tối đa cho các yêu cầu lệnh. Đặt 0 để dùng thời gian mặc định.",
+      "custom_deny_patterns": "Danh sách đen lệnh",
+      "custom_deny_patterns_hint": "Thêm quy tắc chặn lệnh, mỗi dòng một biểu thức chính quy. Lệnh khớp với bất kỳ quy tắc nào ở đây sẽ bị chặn.",
+      "custom_allow_patterns": "Danh sách cho phép lệnh",
+      "custom_allow_patterns_hint": "Thêm quy tắc cho phép lệnh, mỗi dòng một biểu thức chính quy. Lệnh khớp với bất kỳ quy tắc nào ở đây sẽ bỏ qua khớp danh sách chặn, nhưng các giới hạn an toàn khác vẫn áp dụng.",
+      "custom_patterns_placeholder": "^rm\\s+-rf\\b\n^git\\s+push\\b",
+      "pattern_detector_title": "Công cụ phát hiện mẫu",
+      "pattern_detector_hint": "Nhập một lệnh để kiểm tra xem nó có khớp với mẫu trong danh sách chặn hoặc danh sách cho phép hay không.",
+      "pattern_detector_input_placeholder": "Nhập lệnh cần kiểm tra, ví dụ: rm -rf /tmp",
+      "pattern_detector_test_button": "Kiểm tra",
+      "pattern_detector_result_allowed": "Được phép (khớp danh sách cho phép)",
+      "pattern_detector_result_blocked": "Bị chặn (khớp danh sách đen)",
+      "pattern_detector_result_no_match": "Không khớp (sẽ dùng quy tắc mặc định)",
+      "allow_shell_execution": "Cho phép lệnh theo lịch",
+      "allow_shell_execution_hint": "Cho phép các tác vụ theo lịch chạy lệnh theo mặc định. Khi tắt, người dùng phải truyền command_confirm=true để lên lịch tác vụ lệnh.",
+      "cron_exec_timeout": "Thời gian chờ lệnh theo lịch (phút)",
+      "cron_exec_timeout_hint": "Thời gian chạy tối đa cho các lệnh theo lịch. Đặt 0 để tắt thời gian chờ.",
+      "max_tokens": "Số token tối đa",
+      "max_tokens_hint": "Giới hạn token tối đa cho mỗi phản hồi của mô hình.",
+      "context_window": "Cửa sổ ngữ cảnh",
+      "context_window_hint": "Dung lượng ngữ cảnh đầu vào của mô hình tính bằng token. Để trống để dùng mặc định (gấp 4 lần max tokens).",
+      "max_tool_iterations": "Số vòng lặp công cụ tối đa",
+      "max_tool_iterations_hint": "Số vòng lặp gọi công cụ tối đa trong một tác vụ.",
+      "summarize_threshold": "Ngưỡng tóm tắt tin nhắn",
+      "summarize_threshold_hint": "Bắt đầu tóm tắt sau số lượng tin nhắn này.",
+      "summarize_token_percent": "Phần trăm token để tóm tắt",
+      "summarize_token_percent_hint": "Được dùng khi kích hoạt tóm tắt cuộc trò chuyện.",
+      "session_scope": "Phạm vi phiên",
+      "session_scope_hint": "Cách ngữ cảnh trò chuyện được tách biệt giữa các peer và kênh.",
+      "session_scope_per_channel_peer": "Theo kênh + người dùng",
+      "session_scope_per_channel_peer_desc": "Ngữ cảnh riêng cho từng người dùng trong từng kênh.",
+      "session_scope_per_channel": "Theo kênh",
+      "session_scope_per_channel_desc": "Một ngữ cảnh dùng chung cho mỗi kênh.",
+      "session_scope_per_peer": "Theo người dùng",
+      "session_scope_per_peer_desc": "Một ngữ cảnh cho mỗi người dùng trên mọi kênh.",
+      "session_scope_global": "Toàn cục",
+      "session_scope_global_desc": "Tất cả tin nhắn dùng chung một ngữ cảnh toàn cục.",
+      "heartbeat_enabled": "Heartbeat",
+      "heartbeat_enabled_hint": "Gửi heartbeat theo chu kỳ.",
+      "heartbeat_interval": "Khoảng heartbeat (phút)",
+      "heartbeat_interval_hint": "Khoảng thời gian giữa các tín hiệu heartbeat tính bằng phút.",
+      "devices_enabled": "Bật thiết bị",
+      "devices_enabled_hint": "Bật các tích hợp thiết bị phần cứng.",
+      "monitor_usb": "Theo dõi USB",
+      "monitor_usb_hint": "Theo dõi sự kiện cắm/rút USB khi thiết bị được bật.",
+      "autostart_label": "Khởi chạy khi đăng nhập",
+      "autostart_hint": "Tự động khởi động Miniclaw Web khi bạn đăng nhập.",
+      "autostart_unsupported": "Tính năng khởi chạy khi đăng nhập không được hỗ trợ trên nền tảng này.",
+      "autostart_load_error": "Không thể tải trạng thái khởi chạy khi đăng nhập.",
+      "server_port": "Cổng dịch vụ",
+      "server_port_hint": "Cổng HTTP được Miniclaw Web sử dụng.",
+      "lan_access": "Bật truy cập LAN",
+      "lan_access_hint": "Cho phép các thiết bị khác trong mạng cục bộ truy cập.",
+      "allowed_cidrs": "CIDR mạng được phép",
+      "allowed_cidrs_hint": "Chỉ các client thuộc các dải CIDR này mới có thể truy cập dịch vụ. Mỗi dòng một mục hoặc phân tách bằng dấu phẩy. Để trống để cho phép tất cả.",
+      "allowed_cidrs_placeholder": "192.168.1.0/24\n10.0.0.0/8",
+      "sections": {
+        "agent": "Tác nhân",
+        "runtime": "Runtime",
+        "exec": "Chạy lệnh",
+        "cron": "Tác vụ cron",
+        "launcher": "Dịch vụ",
+        "devices": "Thiết bị"
+      },
+      "open_raw": "Cấu hình thô",
+      "back_to_visual": "Cấu hình trực quan",
+      "raw_json_title": "Cấu hình JSON thô",
+      "json_placeholder": "Nhập cấu hình JSON hợp lệ...",
+      "save_success": "Đã lưu cấu hình thành công.",
+      "save_error": "Không thể lưu cấu hình.",
+      "reset_confirm_title": "Đặt lại thay đổi",
+      "reset_confirm_desc": "Bạn có chắc muốn hoàn tác các thay đổi chưa lưu về trạng thái đã lưu gần nhất không?",
+      "reset_success": "Các thay đổi đã được đặt lại về trạng thái đã lưu gần nhất.",
+      "invalid_json": "Định dạng JSON không hợp lệ.",
+      "format_success": "Định dạng JSON thành công.",
+      "format_error": "Định dạng JSON không hợp lệ.",
+      "format": "Định dạng",
+      "unsaved_changes": "Bạn có thay đổi chưa lưu."
+    },
+    "logs": {
+      "clear": "Xóa nhật ký",
+      "empty": "Đang chờ nhật ký..."
+    }
+  }
+}
