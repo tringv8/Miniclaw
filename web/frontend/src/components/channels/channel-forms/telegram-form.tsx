@@ -90,10 +90,10 @@ export function TelegramForm({
         hint={t("channels.form.desc.allowFrom")}
       >
         <Input
-          value={asStringArray(config.allow_from).join(", ")}
+          value={asStringArray(config.allowFrom).join(", ")}
           onChange={(e) =>
             onChange(
-              "allow_from",
+              "allowFrom",
               e.target.value
                 .split(",")
                 .map((s: string) => s.trim())
