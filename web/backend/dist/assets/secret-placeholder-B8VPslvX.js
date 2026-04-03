@@ -1,0 +1,1 @@
+function e(e,t=``){let n=typeof e==`string`?e.trim():``;return n?n.length<=6?`${n[0]}***${n[n.length-1]}`:n.length<=12?`${n.slice(0,2)}****${n.slice(-2)}`:`${n.slice(0,3)}*****${n.slice(-4)}`:t}export{e as t};
