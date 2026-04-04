@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Miniclaw Launcher
+Comment=Web-based configuration and management UI for Miniclaw
+Exec=miniclaw-launcher
+Icon=miniclaw-launcher
+Terminal=true
+Type=Application
+Categories=Utility;Network;
+Keywords=miniclaw;ai;agent;bot;

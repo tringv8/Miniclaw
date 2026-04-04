@@ -25,5 +25,4 @@ class LauncherContext:
         return [
             self.project_root / "web" / "backend" / "dist",
             self.project_root / "web" / "frontend" / "dist",
-            self.project_root / "web" / "backend" / "dist",
         ]

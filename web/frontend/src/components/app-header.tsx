@@ -210,7 +210,7 @@ export function AppHeader() {
 
         <Button variant="ghost" size="icon" className="size-8" asChild>
           <a
-            href="https://github.com/HKUDS/nanobot/tree/main/docs"
+            href="https://github.com/tringv8/miniclaw/tree/main/docs"
             target="_blank"
             rel="noreferrer"
           >

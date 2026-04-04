@@ -1,0 +1,3 @@
+[submodule "workspace/skills/goggoogleworkspace"]
+	path = workspace/skills/goggoogleworkspace
+	url = https://github.com/steipete/gogcli

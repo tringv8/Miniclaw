@@ -10,6 +10,7 @@ node_modules/
 .env
 *.pyc
 dist/
+!web/backend/dist/
 build/
 *.egg-info/
 *.egg
