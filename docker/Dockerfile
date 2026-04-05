@@ -2,7 +2,7 @@ FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
 # Install Node.js 20 for the WhatsApp bridge
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl ca-certificates gnupg git openssh-client && \
+    apt-get install -y --no-install-recommends curl ca-certificates gnupg git && \
     mkdir -p /etc/apt/keyrings && \
     curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
     echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" > /etc/apt/sources.list.d/nodesource.list && \
@@ -14,17 +14,17 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-# Clone miniclaw source
-RUN git clone https://github.com/tringv8/miniclaw.git .
-
-# Install Python dependencies (editable so launcher finds source tree)
-RUN uv pip install --system -e .
-
-# Install launcher web dependencies
-RUN uv pip install --system fastapi uvicorn[standard] python-multipart httpx
-
-# Override PyPI oauth-cli-kit with local version (has extra functions)
+ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH="/app:${PYTHONPATH}"
+
+ARG MINICLAW_REPO=https://github.com/tringv8/Miniclaw.git
+ARG MINICLAW_REF=main
+
+RUN git clone "${MINICLAW_REPO}" . && \
+    git -c advice.detachedHead=false checkout "${MINICLAW_REF}" && \
+    rm -rf .git
+
+RUN uv pip install --system -r requirements.txt
 
 WORKDIR /app/bridge
 RUN npm install && npm run build

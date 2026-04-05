@@ -1,9 +1,13 @@
 x-common-config: &common-config
+  image: miniclaw
   build:
     context: .
     dockerfile: Dockerfile
+    args:
+      MINICLAW_REPO: ${MINICLAW_REPO:-https://github.com/tringv8/Miniclaw.git}
+      MINICLAW_REF: ${MINICLAW_REF:-main}
   volumes:
-    - ~/.miniclaw:/root/.miniclaw
+    - miniclaw-data:/root/.miniclaw
   env_file:
     - .env
 
@@ -27,8 +31,8 @@ services:
   miniclaw-launcher:
     container_name: miniclaw-launcher
     <<: *common-config
-    entrypoint: ["python", "/app/miniclaw/cli/launcher.py"]
-    command: []
+    entrypoint: ["miniclaw-launcher"]
+    command: ["--public", "--no-browser", "--port", "18801"]
     restart: unless-stopped
     ports:
       - 18801:18801
@@ -40,3 +44,6 @@ services:
     command: ["status"]
     stdin_open: true
     tty: true
+
+volumes:
+  miniclaw-data:
