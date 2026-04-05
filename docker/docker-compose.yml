@@ -36,6 +36,7 @@ services:
     restart: unless-stopped
     ports:
       - 18801:18801
+      - 1455:1455   # OAuth local callback server
 
   miniclaw-cli:
     <<: *common-config
