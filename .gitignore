@@ -41,3 +41,6 @@ pytest-cache-files-*/
 
 # OS files
 Thumbs.db
+
+# Tests directory (local only)
+tests/
