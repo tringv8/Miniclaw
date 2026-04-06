@@ -32,11 +32,7 @@ Sau khi chạy, mở trình duyệt tại: **http://localhost:18801**
 | `miniclaw restart` | Khởi động lại Gateway |
 | `miniclaw logs` | Xem log hệ thống |
 | `miniclaw -h` | Xem toàn bộ lệnh và trợ giúp |
-| `gog auth add <email>` | Xác thực tài khoản Google (Gmail, Calendar) |
-| `gog auth list` | Xem danh sách tài khoản Google đã xác thực |
-| `gog auth remove <email>` | Xóa xác thực một tài khoản Google |
 
-Lưu ý: để chạy được các lệnh gog, trước tiên hãy copy file .json được lấy từ [Google Console](https://console.cloud.google.com/) và copy vào thư mục miniclaw
 ---
 
 ## Cách 2 — Chạy bằng Docker
@@ -97,6 +93,7 @@ Sau khi chạy Miniclaw, vào **Channels → Telegram**:
 ## Xác thực Google (Gmail, Calendar)
 
 Miniclaw hỗ trợ tích hợp Gmail và Google Calendar thông qua Google Workspace.
+Lưu ý: để chạy được các lệnh gog, trước tiên hãy tải file .json được lấy từ [Google Console](https://console.cloud.google.com/)
 
 Các bước cấu hình trên Docker:
 
@@ -105,7 +102,7 @@ Các bước cấu hình trên Docker:
 mkdir -p /root/.miniclaw/workspace/secrets
 ```
 
-**2. Chép file Credentials từ máy tính vào Docker:**
+**2. Chép file .json từ máy tính vào Docker:**
 ```cmd
 docker cp [ĐƯỜNG_DẪN_FILE_JSON] miniclaw-launcher:/root/.miniclaw/workspace/secrets/gog-credentials.json
 ```
