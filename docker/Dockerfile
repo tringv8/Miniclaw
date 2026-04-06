@@ -41,6 +41,10 @@ RUN curl -fsSL https://github.com/steipete/gogcli/releases/download/v0.12.0/gogc
     chmod +x /usr/local/bin/gog && \
     rm /tmp/gogcli.tar.gz
 
+# Copy Google auth setup script
+COPY gog-setup.sh /usr/local/bin/gog-setup
+RUN chmod +x /usr/local/bin/gog-setup
+
 # Gateway + Launcher ports
 EXPOSE 18790 18801
 

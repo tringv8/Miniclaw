@@ -22,6 +22,9 @@ services:
       - 18801:18801
       - 18790:18790   # Gateway port (managed via web UI)
       - 1455:1455     # OAuth local callback server
+    volumes:
+      - miniclaw-data:/root/.miniclaw
+      - ./secrets:/root/.miniclaw/workspace/secrets  # Đặt file JSON Google vào thư mục này
 
   miniclaw-cli:
     <<: *common-config

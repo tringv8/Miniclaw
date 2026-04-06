@@ -114,32 +114,21 @@ Khi mở bot lần đầu, hãy giới thiệu bản thân để bot hiểu các
 
 ## Xác thực Google (Gmail, Calendar)
 
-Miniclaw hỗ trợ tích hợp Gmail và Google Calendar thông qua Google Workspace.
-Lưu ý: để chạy được các lệnh gog, trước tiên hãy tải file .json được lấy từ [Google Console](https://console.cloud.google.com/)
+Miniclaw hỗ trợ tích hợp Gmail và Google Calendar. Trước tiên tải file `.json` từ [Google Console](https://console.cloud.google.com/).
 
-Các bước cấu hình trên Docker, 
+**1. Đặt file vào thư mục `secrets/`** (cùng chỗ với 3 file Docker):
 
-**1. Tạo thư mục bảo mật:**, Docker Desktop → Containers → miniclaw-launcher → **Open in terminal**
-```cmd
-mkdir -p /root/.miniclaw/workspace/secrets
+Đổi tên file thành `gog-credentials.json` rồi bỏ vào thư mục `secrets/`.
+
+**2. Mở terminal trong container** (Docker Desktop → miniclaw-launcher → **Open in terminal**) và chạy:
+
+```bash
+gog-setup your@gmail.com
 ```
 
-**2. Chép file .json từ máy tính vào Docker:**, mở cmd trên máy tính, nhập lệnh sau
-```cmd
-docker cp [ĐƯỜNG_DẪN_FILE_JSON] miniclaw-launcher:/root/.miniclaw/workspace/secrets/gog-credentials.json
-```
+Script sẽ tự hướng dẫn từng bước — bạn chỉ cần mở URL trong trình duyệt, đăng nhập Google, rồi dán URL redirect trở lại terminal khi được hỏi.
 
-**3. Khai báo file chứng chỉ:**
-```cmd
-gog auth credentials /root/.miniclaw/workspace/secrets/gog-credentials.json
-```
-
-**4. Xác thực OAuth — Bước 1 (Lấy URL):**
-```cmd
-gog auth add [EMAIL_CỦA_BẠN] --services gmail,calendar,drive,docs,sheets --remote --step 1
-```
-
-**5. Xác thực OAuth — Bước 2 (Dán mã Google trả về):**
-```cmd
-gog auth add [EMAIL_CỦA_BẠN] --services gmail,calendar,drive,docs,sheets --remote --step 2 --auth-url 'ĐOẠN_MÃ_GOOGLE_TRẢ_VỀ'
+Kiểm tra thành công:
+```bash
+gog calendar calendars
 ```
