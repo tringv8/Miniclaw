@@ -9,10 +9,15 @@
 > Yêu cầu: Python 3.10+, đã cài Git
 
 Mở cmd từ máy tính, gõ các lệnh sau:
+
+```cmd
 git clone https://github.com/tringv8/miniclaw.git
 cd miniclaw
 pip install -r requirements.txt
 miniclaw-launcher
+```
+
+Sau khi chạy, mở trình duyệt tại: **http://localhost:18801**
 
 
 ### Các lệnh CLI
@@ -55,10 +60,12 @@ Dán link trên vào DownGit → nhấn **Download** → giải nén ra một th
 
 Mở cmd từ thư mục chứa 3 file docker trên, gõ các lệnh sau:
 
+```cmd
 docker build -t miniclaw .
 docker compose up -d
+```
 
-Sau đó mở docker destop và xem miniclaw-launcher trong containers
+Sau đó mở Docker Desktop và xem **miniclaw-launcher** trong tab Containers.
 
 ### Một số lệnh Docker hữu ích
 
@@ -91,17 +98,32 @@ Sau khi chạy Miniclaw, vào **Channels → Telegram**:
 
 Miniclaw hỗ trợ tích hợp Gmail và Google Calendar thông qua Google Workspace.
 
-Các bước cấu hình trên docker:
-1. Tạo thư mục bảo mật:
-    mkdir -p /root/.miniclaw/workspace/secrets
-2. Chép file Credentials từ máy tính vào Docker:
-    docker cp [ĐƯỜNG_DẪN_FILE_JSON] miniclaw-launcher:/root/.miniclaw/workspace/secrets/gog-credentials.json
-3. Khai báo file chứng chỉ:
-    gog auth credentials /root/.miniclaw/workspace/secrets/gog-credentials.json
-4. Xác thực OAuth Bước 1 (Lấy URL):
-    gog auth add [EMAIL_CỦA_BẠN] --services gmail,calendar,drive,docs,sheets --remote --step 1
-5. Xác thực OAuth Bước 2 (Dán URL kết quả):
-    gog auth add [EMAIL_CỦA_BẠN] --services gmail,calendar,drive,docs,sheets --remote --step 2 --auth-url 'ĐOẠN_MÃ_GOOGLE_TRẢ_VỀ'
+Các bước cấu hình trên Docker:
+
+**1. Tạo thư mục bảo mật:**
+```cmd
+mkdir -p /root/.miniclaw/workspace/secrets
+```
+
+**2. Chép file Credentials từ máy tính vào Docker:**
+```cmd
+docker cp [ĐƯỜNG_DẪN_FILE_JSON] miniclaw-launcher:/root/.miniclaw/workspace/secrets/gog-credentials.json
+```
+
+**3. Khai báo file chứng chỉ:**
+```cmd
+gog auth credentials /root/.miniclaw/workspace/secrets/gog-credentials.json
+```
+
+**4. Xác thực OAuth — Bước 1 (Lấy URL):**
+```cmd
+gog auth add [EMAIL_CỦA_BẠN] --services gmail,calendar,drive,docs,sheets --remote --step 1
+```
+
+**5. Xác thực OAuth — Bước 2 (Dán mã Google trả về):**
+```cmd
+gog auth add [EMAIL_CỦA_BẠN] --services gmail,calendar,drive,docs,sheets --remote --step 2 --auth-url 'ĐOẠN_MÃ_GOOGLE_TRẢ_VỀ'
+```
 
 ---
 
