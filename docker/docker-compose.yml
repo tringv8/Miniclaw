@@ -12,22 +12,6 @@ x-common-config: &common-config
     - .env
 
 services:
-  miniclaw-gateway:
-    container_name: miniclaw-gateway
-    <<: *common-config
-    command: ["gateway"]
-    restart: unless-stopped
-    ports:
-      - 18790:18790
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 1G
-        reservations:
-          cpus: '0.25'
-          memory: 256M
-
   miniclaw-launcher:
     container_name: miniclaw-launcher
     <<: *common-config
@@ -36,7 +20,8 @@ services:
     restart: unless-stopped
     ports:
       - 18801:18801
-      - 1455:1455   # OAuth local callback server
+      - 18790:18790   # Gateway port (managed via web UI)
+      - 1455:1455     # OAuth local callback server
 
   miniclaw-cli:
     <<: *common-config
