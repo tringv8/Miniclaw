@@ -2,7 +2,7 @@ FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
 # Install Node.js 20 for the WhatsApp bridge
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl ca-certificates gnupg git && \
+    apt-get install -y --no-install-recommends curl ca-certificates gnupg git tar unzip && \
     mkdir -p /etc/apt/keyrings && \
     curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
     echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" > /etc/apt/sources.list.d/nodesource.list && \
@@ -32,6 +32,14 @@ WORKDIR /app
 
 # Create config directory
 RUN mkdir -p /root/.miniclaw
+
+# Install gogcli (gog) — Linux amd64 binary
+RUN curl -fsSL https://github.com/steipete/gogcli/releases/download/v0.12.0/gogcli_0.12.0_linux_amd64.tar.gz \
+    -o /tmp/gogcli.tar.gz && \
+    tar -xz -C /tmp/ -f /tmp/gogcli.tar.gz && \
+    { mv /tmp/gog /usr/local/bin/gog 2>/dev/null || mv /tmp/gogcli /usr/local/bin/gog; } && \
+    chmod +x /usr/local/bin/gog && \
+    rm /tmp/gogcli.tar.gz
 
 # Gateway + Launcher ports
 EXPOSE 18790 18801
