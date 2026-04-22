@@ -7,6 +7,8 @@ from fastapi.responses import JSONResponse
 
 from backend.utils.config_store import load_raw_config, save_raw_config
 from backend.utils.model_store import (
+    _is_supported_openai_oauth_model,
+    _normalized_model,
     load_model_store,
     normalize_profile,
     replace_profile_secret,
@@ -53,6 +55,11 @@ def _validate_profile(profile: dict[str, Any]) -> str | None:
         return "model_name is required"
     if not profile["model"]:
         return "model is required"
+    normalized_model = _normalized_model(profile["model"])
+    if normalized_model == "openai-codex/codex-mini-latest":
+        return "codex-mini-latest has been removed"
+    if normalized_model.startswith("openai-codex/") and not _is_supported_openai_oauth_model(normalized_model):
+        return "unsupported OpenAI Codex model"
     return None
 
 

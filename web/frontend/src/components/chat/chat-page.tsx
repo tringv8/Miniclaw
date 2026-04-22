@@ -3,10 +3,11 @@ import { useQuery } from "@tanstack/react-query"
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 
-import { getModels } from "@/api/models"
+import { getModels, setDefaultModel } from "@/api/models"
 import { AssistantMessage } from "@/components/chat/assistant-message"
 import { ChatComposer } from "@/components/chat/chat-composer"
 import { ChatEmptyState } from "@/components/chat/chat-empty-state"
+import { ModelSelector } from "@/components/chat/model-selector"
 import { SessionHistoryMenu } from "@/components/chat/session-history-menu"
 import { TypingIndicator } from "@/components/chat/typing-indicator"
 import { UserMessage } from "@/components/chat/user-message"
@@ -35,6 +36,7 @@ function connectionLabel(state: string) {
 export function ChatPage() {
   const { t } = useTranslation()
   const [input, setInput] = useState("")
+  const [switchingModel, setSwitchingModel] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const {
     messages,
@@ -46,7 +48,7 @@ export function ChatPage() {
     newChat,
   } = useMiniclawChat()
 
-  const { data: modelData, isLoading: modelsLoading } = useQuery({
+  const { data: modelData, isLoading: modelsLoading, refetch: refetchModels } = useQuery({
     queryKey: ["models", "chat"],
     queryFn: getModels,
   })
@@ -89,7 +91,24 @@ export function ChatPage() {
       model.model_name === defaultModelName && model.configured === true,
   )
   const hasUsableDefaultModel = Boolean(usableDefaultModel)
+  const supportedOpenAIModels =
+    modelData?.openai_oauth_models.filter((model) => model.configured) ?? []
   const isConnected = connectionState === "connected"
+
+  const handleSetDefaultModel = async (modelName: string) => {
+    if (!modelName || modelName === defaultModelName || switchingModel) {
+      return
+    }
+    setSwitchingModel(true)
+    try {
+      await setDefaultModel(modelName)
+      await refetchModels()
+    } catch (error) {
+      console.error("Failed to set default model:", error)
+    } finally {
+      setSwitchingModel(false)
+    }
+  }
 
   const handleSend = () => {
     const content = input.trim()
@@ -157,12 +176,34 @@ export function ChatPage() {
       <div className="min-h-0 flex-1 px-4 pb-4 sm:px-6">
         <div className="bg-card/80 border-border/60 mx-auto flex h-full w-full max-w-5xl flex-col overflow-hidden rounded-3xl border shadow-sm">
           <div className="border-border/60 flex items-center justify-between border-b px-4 py-3 text-sm sm:px-6">
-            <div className="text-muted-foreground">
+            <div className="text-muted-foreground flex items-center gap-2">
               {modelsLoading ? (
                 <span className="flex items-center gap-2">
                   <IconLoader2 className="size-4 animate-spin" />
                   Loading models
                 </span>
+              ) : supportedOpenAIModels.length > 0 ? (
+                <>
+                  <span>Default model:</span>
+                  <ModelSelector
+                    defaultModelName={
+                      supportedOpenAIModels.some(
+                        (model) => model.model_name === defaultModelName,
+                      )
+                        ? defaultModelName
+                        : ""
+                    }
+                    apiKeyModels={[]}
+                    oauthModels={supportedOpenAIModels}
+                    localModels={[]}
+                    onValueChange={(modelName) => {
+                      void handleSetDefaultModel(modelName)
+                    }}
+                  />
+                  {switchingModel ? (
+                    <IconLoader2 className="size-4 animate-spin" />
+                  ) : null}
+                </>
               ) : defaultModelName ? (
                 <>Default model: {defaultModelName}</>
               ) : (

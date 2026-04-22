@@ -29,6 +29,7 @@ interface ModelsListResponse {
   models: ModelInfo[]
   total: number
   default_model: string
+  openai_oauth_models: ModelInfo[]
 }
 
 interface ModelActionResponse {

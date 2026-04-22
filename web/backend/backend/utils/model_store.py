@@ -11,6 +11,43 @@ from backend.utils.config_store import load_raw_config, save_raw_config
 
 MODEL_STORE_FILE_NAME = "miniclaw-launcher-models.json"
 LEGACY_MODEL_STORE_FILE_NAME = "launcher-models.json"
+OPENAI_OAUTH_SUPPORTED_PROFILES = (
+    {
+        "model_name": "gpt-5.4",
+        "model": "openai-codex/gpt-5.4",
+        "api_key": "",
+        "api_base": "",
+        "auth_method": "oauth",
+    },
+    {
+        "model_name": "gpt-5.3",
+        "model": "openai-codex/gpt-5.3-codex",
+        "api_key": "",
+        "api_base": "",
+        "auth_method": "oauth",
+    },
+    {
+        "model_name": "gpt-5.2",
+        "model": "openai-codex/gpt-5.2",
+        "api_key": "",
+        "api_base": "",
+        "auth_method": "oauth",
+    },
+)
+OPENAI_OAUTH_DEFAULT_MODEL_NAME = "gpt-5.4"
+OPENAI_OAUTH_DEFAULT_MODEL = "openai-codex/gpt-5.4"
+OPENAI_OAUTH_LEGACY_MODEL_NAMES = {
+    "codex-mini-latest",
+    "gpt-5.1-codex",
+    "gpt-5.4-codex",
+    "gpt-5.3-codex",
+}
+OPENAI_OAUTH_LEGACY_MODELS = {
+    "openai-codex/codex-mini-latest",
+    "openai_codex/codex-mini-latest",
+    "openai-codex/gpt-5.1-codex",
+    "openai_codex/gpt-5.1-codex",
+}
 
 
 DEFAULT_MODEL_STORE = {
@@ -27,8 +64,8 @@ DEFAULT_PROVIDER_MODELS: dict[tuple[str, str], dict[str, Any]] = {
         "auth_method": "token",
     },
     ("openai", "oauth"): {
-        "model_name": "gpt-5.1-codex",
-        "model": "openai-codex/gpt-5.1-codex",
+        "model_name": OPENAI_OAUTH_DEFAULT_MODEL_NAME,
+        "model": OPENAI_OAUTH_DEFAULT_MODEL,
         "api_key": "",
         "api_base": "",
         "auth_method": "oauth",
@@ -145,7 +182,7 @@ def load_model_store(path: Path, config_path: Path) -> dict[str, Any]:
         legacy_path = _legacy_model_store_path(path)
         store = _load_store_data(legacy_path) if legacy_path.exists() else deepcopy(DEFAULT_MODEL_STORE)
 
-    changed = False
+    changed = _sync_openai_oauth_supported_profiles(store)
     bootstrap = profile_from_config(config_path)
     if bootstrap:
         matched = False
@@ -165,7 +202,10 @@ def load_model_store(path: Path, config_path: Path) -> dict[str, Any]:
             store["default_model"] = bootstrap["model_name"]
             changed = True
 
-    if not store["default_model"] and store["models"]:
+    if (
+        not store["default_model"]
+        or not any(item["model_name"] == store["default_model"] for item in store["models"])
+    ) and store["models"]:
         store["default_model"] = store["models"][0]["model_name"]
         changed = True
 
@@ -193,9 +233,93 @@ def _normalized_provider(provider: str) -> str:
     return provider.strip().lower().replace("-", "_")
 
 
+def _normalized_model(model: str) -> str:
+    lower = str(model or "").strip().lower()
+    if lower.startswith("openai_codex/"):
+        return "openai-codex/" + lower.split("/", 1)[1]
+    return lower
+
+
+def _openai_oauth_supported_profile_map() -> dict[str, dict[str, Any]]:
+    return {
+        _normalized_model(str(profile["model"])): normalize_profile(profile)
+        for profile in OPENAI_OAUTH_SUPPORTED_PROFILES
+    }
+
+
+def _supported_openai_oauth_profile_for_model(model: str) -> dict[str, Any] | None:
+    return _openai_oauth_supported_profile_map().get(_normalized_model(model))
+
+
+def _is_supported_openai_oauth_model(model: str) -> bool:
+    return _supported_openai_oauth_profile_for_model(model) is not None
+
+
+def _is_openai_oauth_legacy_profile(profile: dict[str, Any]) -> bool:
+    normalized = normalize_profile(profile)
+    model = _normalized_model(normalized["model"])
+    model_name = normalized["model_name"].strip().lower()
+    if model in OPENAI_OAUTH_LEGACY_MODELS:
+        return True
+    return model.startswith("openai-codex/") and model_name in OPENAI_OAUTH_LEGACY_MODEL_NAMES
+
+
+def _sync_openai_oauth_supported_profiles(store: dict[str, Any]) -> bool:
+    changed = False
+    supported_by_model = _openai_oauth_supported_profile_map()
+    found_supported: set[str] = set()
+    supported_models: list[dict[str, Any]] = []
+    passthrough_models: list[dict[str, Any]] = []
+
+    for raw_item in store.get("models", []):
+        item = normalize_profile(raw_item)
+        normalized_model = _normalized_model(item["model"])
+
+        if _is_openai_oauth_legacy_profile(item):
+            canonical = supported_by_model.get(normalized_model)
+            if canonical is None:
+                changed = True
+                continue
+            item = normalize_profile({**item, **canonical, "auth_method": item["auth_method"]})
+            normalized_model = _normalized_model(item["model"])
+            changed = True
+
+        canonical = supported_by_model.get(normalized_model)
+        if canonical:
+            item = normalize_profile({**item, **canonical, "auth_method": item["auth_method"]})
+            if normalized_model in found_supported:
+                changed = True
+                continue
+            found_supported.add(normalized_model)
+            supported_models.append(item)
+            continue
+
+        passthrough_models.append(item)
+
+    ordered_supported: list[dict[str, Any]] = []
+    for profile in OPENAI_OAUTH_SUPPORTED_PROFILES:
+        canonical = normalize_profile(profile)
+        canonical_model = _normalized_model(canonical["model"])
+        matched = next(
+            (item for item in supported_models if _normalized_model(item["model"]) == canonical_model),
+            None,
+        )
+        if matched is None:
+            ordered_supported.append(canonical)
+            changed = True
+            continue
+        ordered_supported.append(matched)
+
+    updated_models = [*ordered_supported, *passthrough_models]
+    if updated_models != store.get("models", []):
+        store["models"] = updated_models
+        changed = True
+    return changed
+
+
 def _model_belongs_to_provider(provider: str, model: str, auth_method: str = "") -> bool:
     normalized_provider = _normalized_provider(provider)
-    lower = str(model or "").strip().lower()
+    lower = _normalized_model(model)
     if normalized_provider == "openai":
         if auth_method == "oauth":
             return lower.startswith("openai-codex/") or lower.startswith("openai_codex/")
@@ -261,15 +385,45 @@ def sync_provider_auth_state(
             store["models"].append(added_profile)
             found = True
 
+    preferred_profile: dict[str, Any] | None = None
+    if normalized_provider == "openai" and auth_method == "oauth":
+        _sync_openai_oauth_supported_profiles(store)
+        preferred_profile = next(
+            (
+                item
+                for item in store["models"]
+                if _normalized_model(item.get("model", "")) == _normalized_model(OPENAI_OAUTH_DEFAULT_MODEL)
+            ),
+            None,
+        )
+        found = found or preferred_profile is not None
+
+    provider_default_selected = any(
+        _provider_family_match(provider, item.get("model", ""))
+        and item.get("model_name") == store["default_model"]
+        for item in store["models"]
+    )
+    default_model_missing = bool(store["default_model"]) and not any(
+        item.get("model_name") == store["default_model"] for item in store["models"]
+    )
+    legacy_default_selected = any(
+        _is_openai_oauth_legacy_profile(item) and item.get("model_name") == store["default_model"]
+        for item in store["models"]
+    )
+
     if added_profile and (
         not store["default_model"]
-        or any(
-            _provider_family_match(provider, item.get("model", ""))
-            and item.get("model_name") == store["default_model"]
-            for item in store["models"]
-        )
+        or provider_default_selected
+        or default_model_missing
     ):
         store["default_model"] = added_profile["model_name"]
+    elif preferred_profile and (
+        not store["default_model"]
+        or provider_default_selected
+        or legacy_default_selected
+        or default_model_missing
+    ):
+        store["default_model"] = preferred_profile["model_name"]
 
     save_model_store(models_store_path, store)
     default_profile = next(
@@ -314,10 +468,16 @@ def response_models(store: dict[str, Any], oauth_status: dict[str, bool] | None 
             }
         )
         models.append(item)
+    openai_oauth_models = [
+        item
+        for item in models
+        if _is_supported_openai_oauth_model(str(item.get("model") or ""))
+    ]
     return {
         "models": models,
         "total": len(models),
         "default_model": default_model,
+        "openai_oauth_models": openai_oauth_models,
     }
 
 

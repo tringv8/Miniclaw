@@ -27,14 +27,23 @@ class ChannelsConfig(Base):
     send_tool_hints: bool = False  # stream tool-call hints (e.g. read_file("…"))
     send_max_retries: int = Field(default=3, ge=0, le=10)  # Max delivery attempts (initial send included)
 
+    temperature: float = 0.7
+    max_tool_iterations: int = 20
+    summarize_message_threshold: int = 20
+    summarize_token_percent: int = 75
+    split_on_marker: bool = False
+    tool_feedback: dict = Field(default_factory=lambda: {"enabled": False, "max_args_length": 300})
+    reasoning_effort: str | None = None  # low / medium / high - enables LLM thinking mode
+    timezone: str = "UTC"  # IANA timezone, e.g. "Asia/Shanghai", "America/New_York"
+
 
 class AgentDefaults(Base):
     """Default agent configuration."""
 
     workspace: str = "~/.miniclaw/workspace"
     restrict_to_workspace: bool = True
-    model_name: str = "gpt-5.1-codex"
-    model: str = "openai-codex/gpt-5.1-codex"  # Deprecated, use model_name instead
+    model_name: str = "gpt-5.4"
+    model: str = "openai-codex/gpt-5.4"  # Deprecated, use model_name instead
     provider: str = (
         "auto"  # Provider name (e.g. "openai", "openrouter") or "auto" for auto-detection
     )

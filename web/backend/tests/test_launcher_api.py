@@ -190,6 +190,20 @@ def test_models_crud(client: TestClient) -> None:
     listed = client.get("/api/models")
     assert listed.status_code == 200
     assert listed.json()["models"]
+    assert all(
+        item["model"] != "openai-codex/codex-mini-latest"
+        for item in listed.json()["models"]
+    )
+
+    removed_model = client.post(
+        "/api/models",
+        json={
+            "model_name": "codex-mini-latest",
+            "model": "openai-codex/codex-mini-latest",
+            "auth_method": "oauth",
+        },
+    )
+    assert removed_model.status_code == 400
 
     added = client.post(
         "/api/models",
@@ -202,13 +216,14 @@ def test_models_crud(client: TestClient) -> None:
     )
     assert added.status_code == 200
     assert added.json()["status"] == "ok"
+    added_index = int(added.json()["index"])
 
     make_default = client.post("/api/models/default", json={"model_name": "gemini-fast"})
     assert make_default.status_code == 200
     assert make_default.json()["default_model"] == "gemini-fast"
 
     updated = client.put(
-        "/api/models/1",
+        f"/api/models/{added_index}",
         json={
             "model_name": "gemini-fast",
             "model": "gemini/gemini-2.5-flash",
@@ -217,7 +232,7 @@ def test_models_crud(client: TestClient) -> None:
     )
     assert updated.status_code == 200
 
-    deleted = client.delete("/api/models/1")
+    deleted = client.delete(f"/api/models/{added_index}")
     assert deleted.status_code == 200
     assert deleted.json()["status"] == "ok"
 
@@ -395,11 +410,16 @@ def test_oauth_browser_callback_persists_openai_login(
     assert openai["account_id"] == "acct-123"
 
     models = client.get("/api/models").json()
-    assert models["default_model"] == "gpt-5.1-codex"
+    assert models["default_model"] == "gpt-5.4"
     default_model = next(item for item in models["models"] if item["is_default"])
-    assert default_model["model"] == "openai-codex/gpt-5.1-codex"
+    assert default_model["model"] == "openai-codex/gpt-5.4"
     assert default_model["auth_method"] == "oauth"
     assert default_model["configured"] is True
+    assert [item["model_name"] for item in models["openai_oauth_models"]] == [
+        "gpt-5.4",
+        "gpt-5.3",
+        "gpt-5.2",
+    ]
 
 
 def test_oauth_device_code_poll_persists_openai_login(
@@ -495,9 +515,76 @@ def test_oauth_logout_clears_openai_oauth_state(
     assert openai["logged_in"] is False
 
     models = client.get("/api/models").json()["models"]
-    codex_model = next(item for item in models if item["model"] == "openai-codex/gpt-5.1-codex")
+    codex_model = next(item for item in models if item["model"] == "openai-codex/gpt-5.4")
     assert codex_model["auth_method"] == ""
     assert codex_model["configured"] is False
+
+
+def test_oauth_login_migrates_legacy_codex_default(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _login(client)
+
+    context = client.app.state.launcher_context
+    legacy_store = {
+        "default_model": "codex-mini-latest",
+        "models": [
+            {
+                "model_name": "codex-mini-latest",
+                "model": "openai-codex/codex-mini-latest",
+                "auth_method": "",
+            }
+        ],
+    }
+    Path(context.models_store_path).write_text(
+        json.dumps(legacy_store, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        oauth_api,
+        "oauth_generate_pkce",
+        lambda: ("verifier-1", "challenge-1"),
+    )
+    monkeypatch.setattr(oauth_api, "oauth_generate_state", lambda: "state-1")
+    monkeypatch.setattr(
+        oauth_api,
+        "oauth_build_authorize_url",
+        lambda **kwargs: "https://auth.openai.test/oauth/authorize?state=state-1",
+    )
+    monkeypatch.setattr(
+        oauth_api,
+        "oauth_start_openai_callback_server",
+        lambda state, on_code=None: (DummyOAuthServer(), None),
+    )
+    monkeypatch.setattr(
+        oauth_api,
+        "oauth_exchange_code_for_tokens",
+        lambda **kwargs: OAuthToken(
+            access="access-token",
+            refresh="refresh-token",
+            expires=4102444800000,
+            account_id="acct-migrate",
+        ),
+    )
+
+    login = client.post(
+        "/api/oauth/login",
+        json={"provider": "openai", "method": "browser"},
+    )
+    assert login.status_code == 200
+
+    callback = client.get("/oauth/callback?state=state-1&code=code-123")
+    assert callback.status_code == 200
+
+    models = client.get("/api/models").json()
+    assert models["default_model"] == "gpt-5.4"
+    migrated = next(item for item in models["models"] if item["is_default"])
+    assert migrated["model_name"] == "gpt-5.4"
+    assert migrated["model"] == "openai-codex/gpt-5.4"
+    assert migrated["auth_method"] == "oauth"
+    assert all("codex-mini-latest" not in item["model"] for item in models["models"])
 
 
 def test_miniclaw_token_and_websocket_chat(client: TestClient) -> None:

@@ -3,8 +3,8 @@
     "defaults": {
       "workspace": "~/.miniclaw/workspace",
       "restrictToWorkspace": true,
-      "modelName": "gpt-5.1-codex",
-      "model": "openai-codex/gpt-5.1-codex",
+      "modelName": "gpt-5.4",
+      "model": "openai-codex/gpt-5.4",
       "provider": "auto",
       "maxTokens": 8192,
       "contextWindowTokens": 131072,

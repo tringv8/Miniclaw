@@ -21,7 +21,7 @@ DEFAULT_ORIGINATOR = "miniclaw"
 class OpenAICodexProvider(LLMProvider):
     """Use Codex OAuth to call the Responses API."""
 
-    def __init__(self, default_model: str = "openai-codex/gpt-5.1-codex"):
+    def __init__(self, default_model: str = "openai-codex/gpt-5.4"):
         super().__init__(api_key=None, api_base=None)
         self.default_model = default_model
 
@@ -317,4 +317,14 @@ def _map_finish_reason(status: str | None) -> str:
 def _friendly_error(status_code: int, raw: str) -> str:
     if status_code == 429:
         return "ChatGPT usage quota exceeded or rate limit triggered. Please try again later."
+    if (
+        status_code == 400
+        and "codex-mini-latest" in raw
+        and "not supported" in raw
+        and "ChatGPT account" in raw
+    ):
+        return (
+            "HTTP 400: codex-mini-latest is not supported for this ChatGPT Codex account. "
+            "Switch the OAuth Codex model to gpt-5.4."
+        )
     return f"HTTP {status_code}: {raw}"
