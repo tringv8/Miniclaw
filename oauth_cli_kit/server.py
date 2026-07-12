@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import threading
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -84,8 +85,10 @@ def _start_local_server(
     # can reach this server. Binding to "localhost"/127.0.0.1 only accepts loopback
     # connections, which blocks Docker's proxy from forwarding host:1455 -> container:1455.
     # Security is maintained via the cryptographic `state` parameter validation.
+    in_docker = os.path.exists("/.dockerenv") or os.environ.get("MINICLAW_IN_DOCKER")
+    host = "0.0.0.0" if in_docker else "127.0.0.1"
     try:
-        server = _OAuthServer(("0.0.0.0", 1455), state, on_code=on_code)
+        server = _OAuthServer((host, 1455), state, on_code=on_code)
         threading.Thread(target=server.serve_forever, daemon=True).start()
         return server, None
     except OSError as exc:

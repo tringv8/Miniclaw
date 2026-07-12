@@ -19,7 +19,6 @@ import {
   ExecSection,
   GatewaySection,
   LauncherSection,
-  WebSearchSection,
 } from "@/components/config/config-sections"
 import {
   type CoreConfigForm,
@@ -191,19 +190,6 @@ export function ConfigPage() {
               min: 1,
               max: 65535,
             }),
-            heartbeat: {
-              enabled: form.heartbeatEnabled,
-              intervalS: parseIntField(
-                form.heartbeatIntervalSeconds,
-                "Heartbeat interval",
-                { min: 1 },
-              ),
-              keepRecentMessages: parseIntField(
-                form.heartbeatKeepRecentMessages,
-                "Keep recent messages",
-                { min: 0 },
-              ),
-            },
           },
           tools: {
             restrictToWorkspace: form.restrictToWorkspace,
@@ -216,16 +202,6 @@ export function ConfigPage() {
             },
             web: {
               proxy: form.webProxy.trim() || null,
-              search: {
-                provider: form.webSearchProvider.trim() || "brave",
-                apiKey: form.webSearchApiKey.trim(),
-                baseUrl: form.webSearchBaseUrl.trim(),
-                maxResults: parseIntField(
-                  form.webSearchMaxResults,
-                  "Search max results",
-                  { min: 1 },
-                ),
-              },
             },
           },
         })
@@ -316,7 +292,6 @@ export function ConfigPage() {
               <AgentSection form={form} onFieldChange={updateField} />
               <GatewaySection form={form} onFieldChange={updateField} />
               <ExecSection form={form} onFieldChange={updateField} />
-              <WebSearchSection form={form} onFieldChange={updateField} />
               <LauncherSection
                 launcherForm={launcherForm}
                 onFieldChange={updateLauncherField}

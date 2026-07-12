@@ -17,6 +17,11 @@ if str(LAUNCHER_ROOT) not in sys.path:
 
 from backend.main import create_app
 from backend.api import oauth as oauth_api
+from miniclaw.agent.context import ContextBuilder
+from miniclaw.providers.base import LLMResponse
+from miniclaw.providers.model_router import normalize_openrouter_model_id
+from miniclaw.providers.openai_compat_provider import OpenAICompatProvider
+from miniclaw.providers.registry import find_by_name
 from oauth_cli_kit.models import OAuthToken
 
 
@@ -170,7 +175,7 @@ def test_channels_catalog_includes_web_and_telegram(client: TestClient) -> None:
     web = next(item for item in payload if item["name"] == "web")
     telegram = next(item for item in payload if item["name"] == "telegram")
     assert web["defaults"]["enabled"] is True
-    assert telegram["defaults"]["base_url"] == "https://api.telegram.org"
+    assert telegram["defaults"]["baseUrl"] == "https://api.telegram.org"
 
 
 def test_gateway_status_uses_miniclaw_model_store(client: TestClient) -> None:
@@ -182,6 +187,110 @@ def test_gateway_status_uses_miniclaw_model_store(client: TestClient) -> None:
     response = client.get("/api/gateway/status")
     assert response.status_code == 200
     assert "gateway_status" in response.json()
+
+
+def test_system_prompt_exposes_active_model_and_provider(tmp_path: Path) -> None:
+    builder = ContextBuilder(tmp_path)
+    messages = builder.build_messages(
+        history=[],
+        current_message="Which model are you using?",
+        active_model="openrouter/google/gemini-2.5-flash",
+        active_provider="openrouter",
+    )
+
+    system_prompt = messages[0]["content"]
+    assert "Active model: openrouter/google/gemini-2.5-flash" in system_prompt
+    assert "Active provider: openrouter" in system_prompt
+    assert "report these exact runtime values" in system_prompt
+
+
+def test_normalize_openrouter_model_id() -> None:
+    assert normalize_openrouter_model_id("minimax/minimax-m3") == "minimax/minimax-m3"
+    assert (
+        normalize_openrouter_model_id("openrouter/MINIMAX/MINIMAX-M3")
+        == "minimax/minimax-m3"
+    )
+    assert normalize_openrouter_model_id("hãy đổi model") is None
+    assert normalize_openrouter_model_id("https://openrouter.ai") is None
+
+
+def test_openrouter_omits_tools_for_known_unsupported_model() -> None:
+    provider = OpenAICompatProvider(
+        api_key="test-key",
+        api_base="https://openrouter.ai/api/v1",
+        default_model="openrouter/qwen/qwen-2.5-7b-instruct",
+        model_capabilities={
+            "qwen/qwen-2.5-7b-instruct": ["temperature", "max_tokens"],
+        },
+        spec=find_by_name("openrouter"),
+    )
+    kwargs = provider._build_kwargs(
+        messages=[{"role": "user", "content": "hello"}],
+        tools=[
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_time",
+                    "description": "Get time",
+                    "parameters": {"type": "object", "properties": {}},
+                },
+            }
+        ],
+        model="openrouter/qwen/qwen-2.5-7b-instruct",
+        max_tokens=32,
+        temperature=0,
+        reasoning_effort=None,
+        tool_choice=None,
+    )
+
+    assert "tools" not in kwargs
+    assert "tool_choice" not in kwargs
+
+
+@pytest.mark.asyncio
+async def test_openrouter_model_retries_without_unsupported_tools(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    provider = OpenAICompatProvider(
+        api_key="test-key",
+        api_base="https://openrouter.ai/api/v1",
+        default_model="openrouter/qwen/qwen-2.5-7b-instruct",
+        spec=find_by_name("openrouter"),
+    )
+    calls: list[list[dict] | None] = []
+
+    async def fake_stream(**kwargs):
+        calls.append(kwargs.get("tools"))
+        if len(calls) == 1:
+            return LLMResponse(
+                content=(
+                    'Error: {"error":{"code":404,"message":'
+                    '"No endpoints found that support tool use"}}'
+                ),
+                finish_reason="error",
+            )
+        return LLMResponse(content="same model ok", finish_reason="stop")
+
+    monkeypatch.setattr(provider, "_safe_chat_stream", fake_stream)
+    tools = [
+        {
+            "type": "function",
+            "function": {
+                "name": "get_time",
+                "description": "Get time",
+                "parameters": {"type": "object", "properties": {}},
+            },
+        }
+    ]
+    response = await provider.chat_stream_with_retry(
+        messages=[{"role": "user", "content": "hello"}],
+        tools=tools,
+        model="openrouter/qwen/qwen-2.5-7b-instruct",
+    )
+
+    assert response.content == "same model ok"
+    assert calls == [tools, None]
+    await provider._client.close()
 
 
 def test_models_crud(client: TestClient) -> None:
@@ -632,6 +741,17 @@ def test_miniclaw_token_and_websocket_chat(client: TestClient) -> None:
                 }
             )
             await send_event({"type": "typing.stop", "timestamp": 4})
+
+        async def forward_background_events(
+            self,
+            *,
+            session_id: str,
+            send_event,
+            idle_poll_seconds: float = 0.5,
+        ) -> None:
+            import asyncio
+            while True:
+                await asyncio.sleep(10)
 
     client.app.state.launcher_context.chat_runtime = FakeChatRuntime()
     session_id = "session-123"

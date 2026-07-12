@@ -1,6 +1,6 @@
 ---
 name: gog
-description: Use when interacting with Google Workspace via the gog CLI—authenticate accounts, search/send Gmail, manage Calendar events, query Drive/Contacts, and edit Sheets/Docs directly from the terminal.
+description: Dùng khi tương tác với Google Workspace qua CLI gog—xác thực tài khoản, tìm kiếm/gửi Gmail, quản lý sự kiện Calendar, truy vấn Drive/Contacts, và chỉnh sửa Sheets/Docs trực tiếp từ terminal.
 metadata:
   openclaw:
     emoji: "🎮"

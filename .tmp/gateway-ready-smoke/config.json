@@ -1,0 +1,1 @@
+{"agents":{"defaults":{"modelName":"gpt-5.4","model":"openai/gpt-5.4","provider":"auto"}},"providers":{"openai":{"apiKey":""}}}

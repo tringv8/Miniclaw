@@ -77,7 +77,131 @@ DEFAULT_PROVIDER_MODELS: dict[tuple[str, str], dict[str, Any]] = {
         "api_base": "",
         "auth_method": "token",
     },
+    ("gemini", "oauth"): {
+        "model_name": "gemini-2.5-flash",
+        "model": "gemini/gemini-2.5-flash",
+        "api_key": "",
+        "api_base": "",
+        "auth_method": "oauth",
+    },
+    ("gemini", "token"): {
+        "model_name": "gemini-2.5-flash",
+        "model": "gemini/gemini-2.5-flash",
+        "api_key": "",
+        "api_base": "",
+        "auth_method": "token",
+    },
+    ("github_copilot", "oauth"): {
+        "model_name": "copilot-gpt-4o",
+        "model": "github_copilot/gpt-4o",
+        "api_key": "",
+        "api_base": "",
+        "auth_method": "oauth",
+    },
+    ("moonshot", "token"): {
+        "model_name": "kimi-k2.5",
+        "model": "moonshot/kimi-k2.5",
+        "api_key": "",
+        "api_base": "",
+        "auth_method": "token",
+    },
+    ("deepseek", "token"): {
+        "model_name": "deepseek-chat",
+        "model": "deepseek/deepseek-chat",
+        "api_key": "",
+        "api_base": "",
+        "auth_method": "token",
+    },
+    ("openrouter", "token"): {
+        "model_name": "google/gemini-2.5-flash",
+        "model": "openrouter/google/gemini-2.5-flash",
+        "api_key": "",
+        "api_base": "https://openrouter.ai/api/v1",
+        "auth_method": "token",
+    },
+    ("ollama", "local"): {
+        "model_name": "qwen2.5:7b",
+        "model": "ollama/qwen2.5:7b",
+        "api_key": "",
+        "api_base": "http://localhost:11434/v1",
+        "auth_method": "local",
+    },
 }
+
+OLLAMA_QWEN_PRESETS = (
+    {
+        "model_name": "qwen2.5:7b",
+        "model": "ollama/qwen2.5:7b",
+        "api_key": "",
+        "api_base": "http://localhost:11434/v1",
+        "auth_method": "local",
+    },
+    {
+        "model_name": "qwen2.5:1.5b",
+        "model": "ollama/qwen2.5:1.5b",
+        "api_key": "",
+        "api_base": "http://localhost:11434/v1",
+        "auth_method": "local",
+    },
+)
+
+# Providers whose default models should be pre-populated only when explicitly
+# configured (i.e. after a login / save credential action).  The OpenAI Codex
+# profiles are managed by _sync_openai_oauth_supported_profiles; Ollama needs
+# the user to set an api_base first; GitHub Copilot requires device login.
+_DEFERRED_PROVIDERS = {"openai_codex", "github_copilot", "ollama"}
+
+
+def _sync_default_provider_models(store: dict[str, Any]) -> bool:
+    """Ensure every provider in DEFAULT_PROVIDER_MODELS has at least one entry
+    in the store so users can see which providers are available even before they
+    configure credentials.
+
+    Rules:
+    - Skip providers in _DEFERRED_PROVIDERS (managed elsewhere).
+    - Prefer the "token" variant over "oauth" when a provider has both and
+      neither is already in the store.
+    - Never overwrite an existing entry with the same model_name.
+    - Returns True if the store was modified.
+    """
+    changed = False
+
+    # Collect model_names already in store
+    existing_names: set[str] = {normalize_profile(m)["model_name"] for m in store.get("models", [])}
+
+    # Group DEFAULT_PROVIDER_MODELS by provider to pick the best variant
+    from collections import defaultdict
+    by_provider: dict[str, list[tuple[str, dict]]] = defaultdict(list)
+    for (prov, method), template in DEFAULT_PROVIDER_MODELS.items():
+        if prov in _DEFERRED_PROVIDERS:
+            continue
+        # Also skip openai token — the OpenAI section is mainly OAuth-only in this launcher
+        if prov == "openai" and method == "token":
+            continue
+        by_provider[prov].append((method, template))
+
+    for prov, variants in by_provider.items():
+        # Check if ANY variant of this provider already has an entry
+        already_present = any(
+            _model_belongs_to_provider(prov, normalize_profile(m)["model"])
+            for m in store.get("models", [])
+        )
+        if already_present:
+            continue
+
+        # Pick best variant: prefer "token" over "oauth"
+        variant_map = {method: template for method, template in variants}
+        template = variant_map.get("token") or variant_map.get("oauth") or variants[0][1]
+        profile = normalize_profile(template)
+
+        if profile["model_name"] in existing_names:
+            continue
+
+        store.setdefault("models", []).append(profile)
+        existing_names.add(profile["model_name"])
+        changed = True
+
+    return changed
 
 
 def mask_secret(value: str) -> str:
@@ -183,6 +307,7 @@ def load_model_store(path: Path, config_path: Path) -> dict[str, Any]:
         store = _load_store_data(legacy_path) if legacy_path.exists() else deepcopy(DEFAULT_MODEL_STORE)
 
     changed = _sync_openai_oauth_supported_profiles(store)
+    changed = _sync_default_provider_models(store) or changed
     bootstrap = profile_from_config(config_path)
     if bootstrap:
         matched = False
@@ -335,6 +460,30 @@ def _model_belongs_to_provider(provider: str, model: str, auth_method: str = "")
             or lower.startswith("antigravity/")
             or lower.startswith("google-antigravity/")
         )
+    if normalized_provider == "gemini":
+        return lower == "gemini" or lower.startswith("gemini/")
+    if normalized_provider in {"github_copilot", "github-copilot", "copilot"}:
+        return (
+            lower == "github_copilot"
+            or lower == "github-copilot"
+            or lower == "copilot"
+            or lower.startswith("github_copilot/")
+            or lower.startswith("github-copilot/")
+            or lower.startswith("copilot/")
+        )
+    if normalized_provider in {"moonshot", "kimi"}:
+        return (
+            lower == "moonshot"
+            or lower.startswith("moonshot/")
+            or lower == "kimi"
+            or lower.startswith("kimi/")
+        )
+    if normalized_provider == "deepseek":
+        return lower == "deepseek" or lower.startswith("deepseek/")
+    if normalized_provider == "openrouter":
+        return lower == "openrouter" or lower.startswith("openrouter/")
+    if normalized_provider == "ollama":
+        return lower == "ollama" or lower.startswith("ollama/")
     return False
 
 
@@ -372,16 +521,26 @@ def sync_provider_auth_state(
         target_provider = "openai_codex" if normalized_provider == "openai" and auth_method == "oauth" else normalized_provider
         matchers = [lambda model, target=target_provider, method=auth_method: _model_belongs_to_provider(target, model, method)]
 
+    raw = load_raw_config(config_path)
+    providers = raw.get("providers") or {}
+    p_block = providers.get(normalized_provider) or {}
+    api_key = str(p_block.get("apiKey") or p_block.get("api_key") or "")
+    api_base = str(p_block.get("apiBase") or p_block.get("api_base") or "")
+
     found = False
     for item in store["models"]:
         if any(matcher(item.get("model", "")) for matcher in matchers):
             item["auth_method"] = auth_method
+            item["api_key"] = api_key
+            item["api_base"] = api_base
             found = True
 
     added_profile: dict[str, Any] | None = None
     if auth_method and not found:
         added_profile = _default_profile_for_provider(provider, auth_method)
         if added_profile:
+            added_profile["api_key"] = api_key
+            added_profile["api_base"] = api_base
             store["models"].append(added_profile)
             found = True
 

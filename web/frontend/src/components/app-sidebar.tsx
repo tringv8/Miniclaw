@@ -5,10 +5,12 @@ import {
   IconChevronsUp,
   IconKey,
   IconListDetails,
+  IconScale,
   IconMessageCircle,
   IconSettings,
   IconSparkles,
   IconTools,
+  IconDatabase,
 } from "@tabler/icons-react"
 import { Link, useRouterState } from "@tanstack/react-router"
 import * as React from "react"
@@ -147,10 +149,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             translateTitle: true,
           },
           {
+            title: "navigation.articles",
+            url: "/articles",
+            icon: IconDatabase,
+            translateTitle: true,
+          },
+          {
             title: "navigation.logs",
             url: "/logs",
             icon: IconListDetails,
             translateTitle: true,
+          },
+          {
+            title: "So sánh LLM",
+            url: "/llm-benchmark",
+            icon: IconScale,
+            translateTitle: false,
           },
         ],
       },

@@ -39,12 +39,6 @@ TOOL_CATALOG = [
         "config_key": "exec",
     },
     {
-        "name": "web_search",
-        "description": "Search the web using the configured provider.",
-        "category": "web",
-        "config_key": "web_search",
-    },
-    {
         "name": "web_fetch",
         "description": "Fetch and summarize a webpage.",
         "category": "web",

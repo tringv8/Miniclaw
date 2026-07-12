@@ -430,6 +430,7 @@ def _make_provider(config: Config):
             api_base=config.get_api_base(model),
             default_model=model,
             extra_headers=p.extra_headers if p else None,
+            model_capabilities=p.model_capabilities if p else None,
             spec=spec,
         )
 
@@ -577,7 +578,6 @@ def gateway(
     from miniclaw.channels.manager import ChannelManager
     from miniclaw.cron.service import CronService
     from miniclaw.cron.types import CronJob
-    from miniclaw.heartbeat.service import HeartbeatService
     from miniclaw.session.manager import SessionManager
 
     if verbose:
@@ -609,7 +609,6 @@ def gateway(
         model=config.agents.defaults.model,
         max_iterations=config.agents.defaults.max_tool_iterations,
         context_window_tokens=config.agents.defaults.context_window_tokens,
-        web_search_config=config.tools.web.search,
         web_proxy=config.tools.web.proxy or None,
         exec_config=config.tools.exec,
         cron_service=cron,
@@ -680,66 +679,6 @@ def gateway(
     # Create channel manager
     channels = ChannelManager(config, bus)
 
-    def _pick_heartbeat_target() -> tuple[str, str]:
-        """Pick a routable channel/chat target for heartbeat-triggered messages."""
-        enabled = set(channels.enabled_channels)
-        # Prefer the most recently updated non-internal session on an enabled channel.
-        for item in session_manager.list_sessions():
-            key = item.get("key") or ""
-            if ":" not in key:
-                continue
-            channel, chat_id = key.split(":", 1)
-            if channel in {"cli", "system"}:
-                continue
-            if channel in enabled and chat_id:
-                return channel, chat_id
-        # Fallback keeps prior behavior but remains explicit.
-        return "cli", "direct"
-
-    # Create heartbeat service
-    async def on_heartbeat_execute(tasks: str) -> str:
-        """Phase 2: execute heartbeat tasks through the full agent loop."""
-        channel, chat_id = _pick_heartbeat_target()
-
-        async def _silent(*_args, **_kwargs):
-            pass
-
-        resp = await agent.process_direct(
-            tasks,
-            session_key="heartbeat",
-            channel=channel,
-            chat_id=chat_id,
-            on_progress=_silent,
-        )
-
-        # Keep a small tail of heartbeat history so the loop stays bounded
-        # without losing all short-term context between runs.
-        session = agent.sessions.get_or_create("heartbeat")
-        session.retain_recent_legal_suffix(hb_cfg.keep_recent_messages)
-        agent.sessions.save(session)
-
-        return resp.content if resp else ""
-
-    async def on_heartbeat_notify(response: str) -> None:
-        """Deliver a heartbeat response to the user's channel."""
-        from miniclaw.bus.events import OutboundMessage
-        channel, chat_id = _pick_heartbeat_target()
-        if channel == "cli":
-            return  # No external channel available to deliver to
-        await bus.publish_outbound(OutboundMessage(channel=channel, chat_id=chat_id, content=response))
-
-    hb_cfg = config.gateway.heartbeat
-    heartbeat = HeartbeatService(
-        workspace=config.workspace_path,
-        provider=provider,
-        model=agent.model,
-        on_execute=on_heartbeat_execute,
-        on_notify=on_heartbeat_notify,
-        interval_s=hb_cfg.interval_s,
-        enabled=hb_cfg.enabled,
-        timezone=config.agents.defaults.timezone,
-    )
-
     if channels.enabled_channels:
         console.print(f"[green]✓[/green] Kênh đã được kích hoạt: {', '.join(channels.enabled_channels)}")
     else:
@@ -749,12 +688,9 @@ def gateway(
     if cron_status["jobs"] > 0:
         console.print(f"[green]✓[/green] Cron: {cron_status['jobs']} tác vụ đã được lên lịch")
 
-    console.print(f"[green]✓[/green] Heartbeat: every {hb_cfg.interval_s}s")
-
     async def run():
         try:
             await cron.start()
-            await heartbeat.start()
             await asyncio.gather(
                 agent.run(),
                 channels.start_all(),
@@ -767,7 +703,6 @@ def gateway(
             console.print(traceback.format_exc())
         finally:
             await agent.close_mcp()
-            heartbeat.stop()
             cron.stop()
             agent.stop()
             await channels.stop_all()
@@ -824,7 +759,6 @@ def agent(
         model=config.agents.defaults.model,
         max_iterations=config.agents.defaults.max_tool_iterations,
         context_window_tokens=config.agents.defaults.context_window_tokens,
-        web_search_config=config.tools.web.search,
         web_proxy=config.tools.web.proxy or None,
         exec_config=config.tools.exec,
         cron_service=cron,
@@ -1236,6 +1170,7 @@ def _register_login(name: str):
 @provider_app.command("login")
 def provider_login(
     provider: str = typer.Argument(..., help="Nhà cung cấp xác thực OAuth (OAuth provider)OAuth provider (e.g. 'openai-codex', 'github-copilot')"),
+    force: bool = typer.Option(False, "--force", "-f", help="Buộc xác thực lại ngay cả khi đã có token hợp lệ (Force re-authentication)"),
 ):
     """Xác thực với nhà cung cấp OAuth."""
     from miniclaw.providers.registry import PROVIDERS
@@ -1253,18 +1188,25 @@ def provider_login(
         raise typer.Exit(1)
 
     console.print(f"{__logo__} Đăng nhập qua OAuth - {spec.label}\n")
-    handler()
+    
+    import inspect
+    sig = inspect.signature(handler)
+    if "force" in sig.parameters:
+        handler(force=force)
+    else:
+        handler()
 
 
 @_register_login("openai_codex")
-def _login_openai_codex() -> None:
+def _login_openai_codex(force: bool = False) -> None:
     try:
         from oauth_cli_kit import get_token, login_oauth_interactive
         token = None
-        try:
-            token = get_token()
-        except Exception:
-            pass
+        if not force:
+            try:
+                token = get_token()
+            except Exception:
+                pass
         if not (token and token.access):
             console.print("[cyan]Đang bắt đầu đăng nhập OAuth ở chế độ tương tác...[/cyan]\n")
             token = login_oauth_interactive(
@@ -1282,28 +1224,51 @@ def _login_openai_codex() -> None:
 
 @_register_login("github_copilot")
 def _login_github_copilot() -> None:
-    import asyncio
-
-    from openai import AsyncOpenAI
-
-    console.print("[cyan]Đang bắt đầu luồng thiết bị GitHub Copilot...[/cyan]\n")
-
-    async def _trigger():
-        client = AsyncOpenAI(
-            api_key="dummy",
-            base_url="https://api.githubcopilot.com",
-        )
-        await client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": "hi"}],
-            max_tokens=1,
-        )
+    import sys
+    import os
+    import time
+    
+    # Add web/backend to sys.path to import backend utils
+    backend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "web", "backend"))
+    if backend_path not in sys.path:
+        sys.path.append(backend_path)
 
     try:
-        asyncio.run(_trigger())
-        console.print("[green]✓ Đã xác thực thành công với GitHub Copilot[/green]")
+        from backend.utils.oauth_native import (
+            request_github_device_code,
+            poll_github_device_code_once,
+            save_github_copilot_token,
+        )
+    except ImportError as e:
+        console.print(f"[red]Không thể nạp thư viện xác thực: {e}[/red]")
+        raise typer.Exit(1)
+
+    console.print("[cyan]Đang khởi tạo luồng xác thực GitHub Copilot...[/cyan]\n")
+    try:
+        flow = request_github_device_code()
+        console.print(f"Vui lòng truy cập trang xác minh: [bold underline]{flow['verify_url']}[/bold underline]")
+        console.print(f"Nhập mã người dùng (User Code): [bold yellow]{flow['user_code']}[/bold yellow]")
+        console.print("\nĐang chờ xác thực từ GitHub...")
+        
+        interval = flow.get("interval", 5)
+        device_code = flow["device_code"]
+        
+        while True:
+            time.sleep(interval)
+            try:
+                token = poll_github_device_code_once(device_code)
+                if token:
+                    save_github_copilot_token(token)
+                    console.print("[green]✓ Đã xác thực thành công với GitHub Copilot[/green]")
+                    break
+            except Exception as e:
+                if "expired" in str(e).lower() or "expired_token" in str(e).lower():
+                    console.print("[red]✗ Mã xác thực đã hết hạn. Vui lòng chạy lại lệnh.[/red]")
+                    raise typer.Exit(1)
+                console.print(f"[red]Lỗi xác thực: {e}[/red]")
+                raise typer.Exit(1)
     except Exception as e:
-        console.print(f"[red]Lỗi xác thực: {e}[/red]")
+        console.print(f"[red]Lỗi khi bắt đầu flow xác thực: {e}[/red]")
         raise typer.Exit(1)
 
 

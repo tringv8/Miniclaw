@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import sys
 import threading
 import time
 import urllib.parse
 import webbrowser
 from collections.abc import Callable
+
+_OAUTH_CALLBACK_TIMEOUT = int(os.environ.get("MINICLAW_OAUTH_TIMEOUT", "300"))
 
 import httpx
 
@@ -215,7 +218,7 @@ def login_oauth_interactive(
         try:
             if server:
                 print_fn("Waiting for browser callback...")
-                callback_task = asyncio.create_task(asyncio.wait_for(code_future, timeout=120))
+                callback_task = asyncio.create_task(asyncio.wait_for(code_future, timeout=_OAUTH_CALLBACK_TIMEOUT))
                 manual_task = asyncio.create_task(_await_manual_input(print_fn))
                 done, pending = await asyncio.wait(
                     [callback_task, manual_task],

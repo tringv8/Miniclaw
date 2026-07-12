@@ -77,6 +77,22 @@ async def add_model(request: Request):
     if error := _validate_profile(profile):
         return JSONResponse({"error": error}, status_code=400)
 
+    # Inherit configured provider api_base and api_key if they are not explicitly specified
+    from backend.utils.model_store import infer_provider_name
+    provider_name = infer_provider_name(profile["model"])
+    if provider_name:
+        raw_config = load_raw_config(context.config_path)
+        providers_block = raw_config.get("providers") or {}
+        p_block = providers_block.get(provider_name) or {}
+        if p_block:
+            if not profile["api_key"] and p_block.get("apiKey"):
+                profile["api_key"] = p_block["apiKey"]
+            if not profile["api_base"] or profile["api_base"] == "http://localhost:11434/v1":
+                if p_block.get("apiBase"):
+                    profile["api_base"] = p_block["apiBase"]
+            elif not profile["api_base"] and p_block.get("apiBase"):
+                profile["api_base"] = p_block["apiBase"]
+
     store = _load_store(context)
     if any(item["model_name"] == profile["model_name"] for item in store["models"]):
         return JSONResponse({"error": "model_name already exists"}, status_code=400)

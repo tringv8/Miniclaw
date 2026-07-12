@@ -114,7 +114,10 @@ export function ToolsPage() {
                                     {tool.name}
                                   </CardTitle>
                                   <CardDescription className="mt-1 break-words">
-                                    {tool.description}
+                                    {t(
+                                      `pages.agent.tools.tool_descriptions.${tool.name}`,
+                                      { defaultValue: tool.description },
+                                    )}
                                   </CardDescription>
                                 </div>
                                 <div className="flex shrink-0 items-center gap-2 self-start">
@@ -140,7 +143,7 @@ export function ToolsPage() {
                                       ? nextEnabled
                                         ? t("pages.agent.tools.enable")
                                         : t("pages.agent.tools.disable")
-                                      : "Managed by miniclaw"}
+                                      : t("pages.agent.tools.managed_by")}
                                   </Button>
                                 </div>
                               </div>

@@ -12,6 +12,7 @@
     "show_more_channels": "Thêm",
     "show_less_channels": "Thu gọn",
     "config": "Cấu hình",
+    "articles": "Dữ liệu",
     "logs": "Nhật ký"
   },
   "launcherLogin": {
@@ -30,7 +31,7 @@
   },
   "chat": {
     "welcome": "Hôm nay tôi có thể giúp gì cho bạn?",
-    "welcomeDesc": "Hãy hỏi tôi về thời tiết, cài đặt hoặc bất kỳ tác vụ nào khác. Tôi luôn sẵn sàng hỗ trợ bạn.",
+    "welcomeDesc": "Hãy hỏi tôi về dữ liệu bài báo trên arxiv, cài đặt hoặc bất kỳ tác vụ nào khác. Tôi luôn sẵn sàng hỗ trợ bạn.",
     "placeholder": "Bắt đầu một tin nhắn mới...\nNhấn Enter để gửi, Shift + Enter để xuống dòng",
     "newChat": "Cuộc trò chuyện mới",
     "notConnected": "Gateway chưa chạy. Hãy khởi động để bắt đầu trò chuyện.",
@@ -100,11 +101,29 @@
       "openai": {
         "description": "Hỗ trợ OAuth qua trình duyệt, mã thiết bị và đăng nhập bằng token."
       },
+      "gemini": {
+        "description": "Hỗ trợ đăng nhập Google OAuth2 hoặc khóa API Gemini."
+      },
+      "github_copilot": {
+        "description": "Hỗ trợ đăng nhập mã thiết bị GitHub. Yêu cầu tài khoản Copilot."
+      },
       "anthropic": {
         "description": "Dùng đăng nhập bằng token để truy cập Claude."
       },
       "antigravity": {
         "description": "Dùng OAuth qua trình duyệt cho Google Cloud Code Assist."
+      },
+      "moonshot": {
+        "description": "Sử dụng khóa API để truy cập mô hình Moonshot (Kimi)."
+      },
+      "deepseek": {
+        "description": "Sử dụng khóa API để truy cập mô hình DeepSeek."
+      },
+      "openrouter": {
+        "description": "Nhập API key từ openrouter.ai/keys."
+      },
+      "ollama": {
+        "description": "Sử dụng dịch vụ Ollama chạy cục bộ, không cần API key."
       }
     },
     "status": {
@@ -126,7 +145,14 @@
     },
     "fields": {
       "openaiToken": "Token OpenAI",
-      "anthropicToken": "Token Anthropic"
+      "anthropicToken": "Token Anthropic",
+      "geminiToken": "Khóa API Gemini",
+      "kimiToken": "Khóa API Kimi (Moonshot)",
+      "deepseekToken": "Khóa API DeepSeek",
+      "openrouterToken": "Khóa API OpenRouter",
+      "ollamaBase": "URL máy chủ Ollama",
+      "username": "Tên đăng nhập",
+      "password": "Mật khẩu"
     },
     "labels": {
       "account": "Tài khoản",
@@ -368,10 +394,6 @@
         "maxSteps": "Số bước xử lý tối đa.",
         "welcomeMessage": "Nội dung lời chào cho phiên mới.",
         "allowTokenQuery": "Cho phép token trong query URL.",
-        "pingInterval": "Khoảng thời gian heartbeat của kết nối tính bằng giây.",
-        "readTimeout": "Thời gian chờ đọc tính bằng giây.",
-        "writeTimeout": "Thời gian chờ ghi tính bằng giây.",
-        "maxConnections": "Số lượng kết nối đồng thời tối đa.",
         "server": "Địa chỉ máy chủ IRC.",
         "tls": "Có bật TLS hay không.",
         "nick": "Biệt danh của bot.",
@@ -415,10 +437,22 @@
         "empty": "Không có công cụ nào.",
         "enable": "Bật",
         "disable": "Tắt",
+        "managed_by": "Quản lý bởi miniclaw",
         "enable_success": "Đã bật công cụ.",
         "disable_success": "Đã tắt công cụ.",
         "toggle_error": "Không thể cập nhật trạng thái công cụ.",
         "config_key": "Được điều khiển bởi tools.{{key}}",
+        "tool_descriptions": {
+          "read_file": "Đọc nội dung tệp từ workspace.",
+          "write_file": "Tạo mới hoặc ghi đè tệp trong workspace.",
+          "edit_file": "Chỉnh sửa có mục tiêu trên các tệp hiện có.",
+          "list_dir": "Kiểm tra các thư mục mà tác nhân có thể truy cập.",
+          "exec": "Chạy các lệnh shell trong workspace đã cấu hình.",
+          "web_fetch": "Lấy và tóm tắt nội dung trang web.",
+          "message": "Gửi tin nhắn tiếp theo vào kênh đang hoạt động.",
+          "spawn": "Khởi chạy tác vụ sub-agent được ủy quyền.",
+          "cron": "Lên lịch nhắc nhở và các công việc định kỳ."
+        },
         "status": {
           "enabled": "Đã bật",
           "disabled": "Đã tắt",
@@ -498,10 +532,6 @@
       "session_scope_per_peer_desc": "Một ngữ cảnh cho mỗi người dùng trên mọi kênh.",
       "session_scope_global": "Toàn cục",
       "session_scope_global_desc": "Tất cả tin nhắn dùng chung một ngữ cảnh toàn cục.",
-      "heartbeat_enabled": "Heartbeat",
-      "heartbeat_enabled_hint": "Gửi heartbeat theo chu kỳ.",
-      "heartbeat_interval": "Khoảng heartbeat (phút)",
-      "heartbeat_interval_hint": "Khoảng thời gian giữa các tín hiệu heartbeat tính bằng phút.",
       "devices_enabled": "Bật thiết bị",
       "devices_enabled_hint": "Bật các tích hợp thiết bị phần cứng.",
       "monitor_usb": "Theo dõi USB",
@@ -554,17 +584,11 @@
       "timezone_label": "Múi giờ",
       "timezone_hint": "Tên múi giờ IANA dùng cho cron và ngữ cảnh runtime.",
       "gateway_title": "Cổng kết nối (Gateway)",
-      "gateway_desc": "Cài đặt mạng và heartbeat nền.",
+      "gateway_desc": "Cài đặt mạng.",
       "gateway_host_label": "Địa chỉ gateway",
       "gateway_host_hint": "Giao diện mạng mà gateway lắng nghe.",
       "gateway_port_label": "Cổng gateway",
       "gateway_port_hint": "Cổng HTTP của gateway.",
-      "heartbeat_label": "Bật heartbeat",
-      "heartbeat_hint_toggle": "Chạy kiểm tra nền định kỳ theo HEARTBEAT.md.",
-      "heartbeat_interval_label": "Khoảng heartbeat (giây)",
-      "heartbeat_interval_label_hint": "Thời gian giữa các lần kiểm tra heartbeat.",
-      "heartbeat_keep_label": "Giữ lại tin nhắn gần đây",
-      "heartbeat_keep_hint": "Số tin nhắn gần đây được giữ lại khi thực thi heartbeat.",
       "exec_title": "Công cụ thực thi lệnh",
       "exec_desc": "Chính sách thực thi shell cho công cụ exec.",
       "exec_enable_label": "Cho phép chạy lệnh",
@@ -574,17 +598,9 @@
       "exec_path_label": "Thêm vào PATH",
       "exec_path_hint": "Thư mục bổ sung được thêm vào PATH khi chạy lệnh.",
       "web_title": "Công cụ Web",
-      "web_desc": "Cài đặt proxy và nhà cung cấp tìm kiếm cho web_search và web_fetch.",
+      "web_desc": "Cài đặt proxy cho web_fetch.",
       "web_proxy_label": "Proxy",
       "web_proxy_hint": "Proxy HTTP hoặc SOCKS (tùy chọn).",
-      "web_search_provider_label": "Nhà cung cấp tìm kiếm",
-      "web_search_provider_hint": "Một trong: brave, tavily, duckduckgo, searxng, hoặc jina.",
-      "web_search_api_key_label": "Khóa API tìm kiếm",
-      "web_search_api_key_hint": "Để trống nếu nhà cung cấp không yêu cầu khóa API.",
-      "web_search_base_url_label": "URL gốc tìm kiếm",
-      "web_search_base_url_hint": "Dùng cho các nhà cung cấp như SearXNG.",
-      "web_max_results_label": "Số kết quả tối đa",
-      "web_max_results_hint": "Số lượng kết quả tìm kiếm tối đa trả về cho tác nhân.",
       "launcher_title": "Truy cập Launcher",
       "launcher_desc": "Cài đặt cho dịch vụ dashboard FastAPI.",
       "launcher_public_label": "Truy cập công khai",

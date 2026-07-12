@@ -41,6 +41,7 @@ def _gateway_start_ready(context) -> tuple[bool, str]:
     if status in {"running", "starting", "restarting", "stopping"}:
         return False, "gateway is already active"
 
+    raw = load_raw_config(context.config_path)
     store = load_model_store(context.models_store_path, context.config_path)
     oauth_status = _oauth_status_map(context.config_path)
     models = response_models(store, oauth_status=oauth_status)["models"]
@@ -49,15 +50,10 @@ def _gateway_start_ready(context) -> tuple[bool, str]:
         default_model = str(models[0].get("model_name") or "")
 
     if not default_model:
-        raw = load_raw_config(context.config_path)
         default_model = _config_default_model(raw)
 
     if not default_model:
         return False, "no default model is configured"
-
-    for item in models:
-        if str(item.get("model_name")) == default_model and not bool(item.get("configured")):
-            return False, "default model is not configured"
 
     return True, ""
 

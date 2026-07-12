@@ -194,12 +194,15 @@ PROVIDERS: tuple[ProviderSpec, ...] = (
         supports_prompt_caching=True,
     ),
     # OpenAI: SDK default base URL (no override needed)
+    # supports_max_completion_tokens=True: newer models (gpt-5.x, o-series)
+    # reject "max_tokens" and require "max_completion_tokens" instead.
     ProviderSpec(
         name="openai",
         keywords=("openai", "gpt"),
         env_key="OPENAI_API_KEY",
         display_name="OpenAI",
         backend="openai_compat",
+        supports_max_completion_tokens=True,
     ),
     # OpenAI Codex: OAuth-based, dedicated provider
     ProviderSpec(

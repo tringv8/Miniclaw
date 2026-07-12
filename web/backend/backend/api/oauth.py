@@ -21,6 +21,17 @@ from backend.utils.oauth_native import (
     request_openai_device_code,
     save_openai_oauth_token,
     start_openai_callback_server,
+    # Gemini
+    gemini_provider_config,
+    build_gemini_authorize_url,
+    start_gemini_callback_server,
+    exchange_gemini_code_for_token,
+    save_gemini_oauth_token,
+    # Copilot
+    request_github_device_code,
+    poll_github_device_code_once,
+    save_github_copilot_token,
+    clear_oauth_status_caches,
 )
 from backend.utils.oauth_store import (
     BROWSER_METHOD,
@@ -76,16 +87,26 @@ def _callback_server_store(request: Request) -> dict[str, Any]:
 
 def _normalize_provider(raw: str) -> str:
     provider = raw.strip().lower()
-    if provider == "antigravity":
-        return "google-antigravity"
-    return provider
+    aliases = {
+        "antigravity": "google-antigravity",
+        "kimi": "moonshot",
+        "github-copilot": "github_copilot",
+        "copilot": "github_copilot",
+    }
+    return aliases.get(provider, provider)
 
 
 def _provider_methods(provider: str) -> set[str]:
     if provider == "openai":
         return {BROWSER_METHOD, DEVICE_CODE_METHOD, TOKEN_METHOD}
-    if provider == "anthropic":
+    if provider == "gemini":
+        return {BROWSER_METHOD, TOKEN_METHOD}
+    if provider in {"anthropic", "moonshot", "deepseek", "openrouter"}:
         return {TOKEN_METHOD}
+    if provider == "github_copilot":
+        return {DEVICE_CODE_METHOD}
+    if provider == "ollama":
+        return {"local"}
     if provider == "google-antigravity":
         return {BROWSER_METHOD}
     return set()
@@ -222,10 +243,17 @@ def _flow_response(flow: dict[str, Any]) -> dict[str, Any]:
 
 
 def _persist_oauth_login(context, provider: str, auth_method: str, token) -> None:
-    if provider != "openai":
+    clear_oauth_status_caches()
+    if provider == "openai":
+        oauth_save_openai_token(token)
+        oauth_mark_provider_oauth(context.config_path, provider)
+    elif provider == "gemini":
+        save_gemini_oauth_token(token)
+        mark_provider_oauth(context.config_path, "gemini")
+    elif provider == "github_copilot":
+        save_github_copilot_token(token)
+    else:
         raise ValueError(f"provider {provider!r} does not support native oauth in this launcher")
-    oauth_save_openai_token(token)
-    oauth_mark_provider_oauth(context.config_path, provider)
     sync_provider_auth_state(
         context.config_path,
         context.models_store_path,
@@ -284,6 +312,7 @@ async def oauth_login(request: Request):
             return JSONResponse({"error": "token is required"}, status_code=400)
         try:
             response = save_provider_token(context.config_path, provider, token)
+            clear_oauth_status_caches()
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
         sync_provider_auth_state(
@@ -293,6 +322,42 @@ async def oauth_login(request: Request):
             TOKEN_METHOD,
         )
         return response
+
+    if provider == "ollama" and method == "local":
+        api_base = str(payload.get("api_base") or "").strip()
+        if not api_base:
+            api_base = "http://localhost:11434/v1"
+        username = str(payload.get("username") or "").strip()
+        password = str(payload.get("password") or "").strip()
+
+        if username or password:
+            import urllib.parse
+            from urllib.parse import urlparse, urlunparse
+            parsed = urlparse(api_base)
+            user_part = urllib.parse.quote(username) if username else ""
+            pass_part = urllib.parse.quote(password) if password else ""
+            user_pass = f"{user_part}:{pass_part}"
+            netloc = parsed.netloc
+            if "@" in netloc:
+                _, host_port = netloc.rsplit("@", 1)
+            else:
+                host_port = netloc
+            new_netloc = f"{user_pass}@{host_port}"
+            parsed = parsed._replace(netloc=new_netloc)
+            api_base = urlunparse(parsed)
+
+        from backend.utils.config_store import load_raw_config, save_raw_config
+        raw = load_raw_config(context.config_path)
+        raw.setdefault("providers", {})["ollama"] = {"apiBase": api_base, "apiKey": ""}
+        save_raw_config(context.config_path, raw)
+        clear_oauth_status_caches()
+        sync_provider_auth_state(
+            context.config_path,
+            context.models_store_path,
+            "ollama",
+            "local",
+        )
+        return {"status": "ok", "provider": "ollama", "method": "local"}
 
     if provider == "openai" and method == DEVICE_CODE_METHOD:
         try:
@@ -310,6 +375,38 @@ async def oauth_login(request: Request):
             "updated_at": now.isoformat(),
             "expires_at": (now + DEVICE_FLOW_TTL).isoformat(),
             "device_auth_id": device_flow["device_auth_id"],
+            "user_code": device_flow["user_code"],
+            "verify_url": device_flow["verify_url"],
+            "interval": int(device_flow.get("interval") or 5),
+        }
+        _store_flow(request, flow)
+        return {
+            "status": "ok",
+            "provider": provider,
+            "method": method,
+            "flow_id": flow["flow_id"],
+            "user_code": flow["user_code"],
+            "verify_url": flow["verify_url"],
+            "interval": flow["interval"],
+            "expires_at": flow["expires_at"],
+        }
+
+    if provider == "github_copilot" and method == DEVICE_CODE_METHOD:
+        try:
+            device_flow = request_github_device_code()
+        except Exception as exc:
+            return JSONResponse({"error": str(exc)}, status_code=500)
+
+        now = oauth_now()
+        flow = {
+            "flow_id": _new_flow_id(),
+            "provider": provider,
+            "method": method,
+            "status": FLOW_PENDING,
+            "created_at": now.isoformat(),
+            "updated_at": now.isoformat(),
+            "expires_at": (now + DEVICE_FLOW_TTL).isoformat(),
+            "device_code": device_flow["device_code"],
             "user_code": device_flow["user_code"],
             "verify_url": device_flow["verify_url"],
             "interval": int(device_flow.get("interval") or 5),
@@ -383,6 +480,64 @@ async def oauth_login(request: Request):
             "expires_at": flow["expires_at"],
         }
 
+    if provider == "gemini" and method == BROWSER_METHOD:
+        verifier, challenge = oauth_generate_pkce()
+        state = oauth_generate_state()
+        config = gemini_provider_config()
+        redirect_uri = str(config.redirect_uri)
+        auth_url = build_gemini_authorize_url(
+            redirect_uri=redirect_uri,
+            code_challenge=challenge,
+            state=state,
+        )
+        now = oauth_now()
+        flow = {
+            "flow_id": _new_flow_id(),
+            "provider": provider,
+            "method": method,
+            "status": FLOW_PENDING,
+            "created_at": now.isoformat(),
+            "updated_at": now.isoformat(),
+            "expires_at": (now + BROWSER_FLOW_TTL).isoformat(),
+            "code_verifier": verifier,
+            "oauth_state": state,
+            "redirect_uri": redirect_uri,
+        }
+
+        def _handle_gemini_browser_code(code: str) -> None:
+            try:
+                token = exchange_gemini_code_for_token(
+                    code=code,
+                    verifier=verifier,
+                    redirect_uri=redirect_uri,
+                )
+                _persist_oauth_login(context, "gemini", "oauth", token)
+            except Exception as exc:
+                _set_flow_error(request, flow["flow_id"], str(exc))
+                return
+            _set_flow_success(request, flow["flow_id"])
+
+        server, server_error = start_gemini_callback_server(
+            state,
+            on_code=_handle_gemini_browser_code,
+        )
+        if not server:
+            return JSONResponse(
+                {"error": server_error or "failed to start local OAuth callback server"},
+                status_code=500,
+            )
+
+        _store_flow(request, flow)
+        _callback_server_store(request)[flow["flow_id"]] = server
+        return {
+            "status": "ok",
+            "provider": provider,
+            "method": method,
+            "flow_id": flow["flow_id"],
+            "auth_url": auth_url,
+            "expires_at": flow["expires_at"],
+        }
+
     if provider == "google-antigravity" and method == BROWSER_METHOD:
         return JSONResponse(
             {"error": "Google Antigravity browser OAuth is not wired into miniclaw runtime yet."},
@@ -412,10 +567,15 @@ async def poll_oauth_flow(flow_id: str, request: Request):
         return _flow_response(flow)
 
     try:
-        token = oauth_poll_device_code_once(
-            str(flow.get("device_auth_id") or ""),
-            str(flow.get("user_code") or ""),
-        )
+        if flow["provider"] == "github_copilot":
+            token = poll_github_device_code_once(
+                str(flow.get("device_code") or ""),
+            )
+        else:
+            token = oauth_poll_device_code_once(
+                str(flow.get("device_auth_id") or ""),
+                str(flow.get("user_code") or ""),
+            )
     except Exception as exc:
         updated = _set_flow_error(request, flow_id, str(exc))
         return _flow_response(updated or flow)
@@ -425,7 +585,7 @@ async def poll_oauth_flow(flow_id: str, request: Request):
         return _flow_response(updated)
 
     try:
-        _persist_oauth_login(context, "openai", "oauth", token)
+        _persist_oauth_login(context, flow["provider"], "oauth", token)
     except Exception as exc:
         updated = _set_flow_error(request, flow_id, str(exc))
         return _flow_response(updated or flow)
@@ -443,6 +603,7 @@ async def oauth_logout(request: Request):
         return JSONResponse({"error": "provider is required"}, status_code=400)
     try:
         result = clear_provider_token(context.config_path, provider)
+        clear_oauth_status_caches()
     except ValueError as exc:
         return JSONResponse({"error": str(exc)}, status_code=400)
     sync_provider_auth_state(

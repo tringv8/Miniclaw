@@ -21,10 +21,6 @@ TELEGRAM_DEFAULTS: dict[str, Any] = {
 
 WEB_DEFAULTS: dict[str, Any] = {
     "enabled": True,
-    "pingInterval": 30,
-    "readTimeout": 60,
-    "writeTimeout": 10,
-    "maxConnections": 100,
     "allowFrom": [],
     "placeholder": {
         "enabled": False,

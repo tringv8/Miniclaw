@@ -14,17 +14,10 @@ export interface CoreConfigForm {
   timezone: string
   gatewayHost: string
   gatewayPort: string
-  heartbeatEnabled: boolean
-  heartbeatIntervalSeconds: string
-  heartbeatKeepRecentMessages: string
   execEnabled: boolean
   execTimeout: string
   execPathAppend: string
   webProxy: string
-  webSearchProvider: string
-  webSearchApiKey: string
-  webSearchBaseUrl: string
-  webSearchMaxResults: string
 }
 
 export interface LauncherForm {
@@ -49,17 +42,10 @@ export const EMPTY_FORM: CoreConfigForm = {
   timezone: "UTC",
   gatewayHost: "0.0.0.0",
   gatewayPort: "18790",
-  heartbeatEnabled: true,
-  heartbeatIntervalSeconds: "1800",
-  heartbeatKeepRecentMessages: "8",
   execEnabled: true,
   execTimeout: "60",
   execPathAppend: "",
   webProxy: "",
-  webSearchProvider: "brave",
-  webSearchApiKey: "",
-  webSearchBaseUrl: "",
-  webSearchMaxResults: "5",
 }
 
 export const EMPTY_LAUNCHER_FORM: LauncherForm = {
@@ -100,11 +86,9 @@ export function buildFormFromConfig(config: unknown): CoreConfigForm {
   const agents = asRecord(root.agents)
   const defaults = asRecord(agents.defaults)
   const gateway = asRecord(root.gateway)
-  const heartbeat = asRecord(gateway.heartbeat)
   const tools = asRecord(root.tools)
   const exec = asRecord(tools.exec)
   const web = asRecord(tools.web)
-  const webSearch = asRecord(web.search)
   const toolFeedback = asRecord(defaults.toolFeedback)
 
   return {
@@ -147,32 +131,10 @@ export function buildFormFromConfig(config: unknown): CoreConfigForm {
     timezone: asString(defaults.timezone, EMPTY_FORM.timezone),
     gatewayHost: asString(gateway.host, EMPTY_FORM.gatewayHost),
     gatewayPort: asNumberString(gateway.port, EMPTY_FORM.gatewayPort),
-    heartbeatEnabled: asBool(heartbeat.enabled, EMPTY_FORM.heartbeatEnabled),
-    heartbeatIntervalSeconds: asNumberString(
-      heartbeat.intervalS,
-      EMPTY_FORM.heartbeatIntervalSeconds,
-    ),
-    heartbeatKeepRecentMessages: asNumberString(
-      heartbeat.keepRecentMessages,
-      EMPTY_FORM.heartbeatKeepRecentMessages,
-    ),
     execEnabled: asBool(exec.enable, EMPTY_FORM.execEnabled),
     execTimeout: asNumberString(exec.timeout, EMPTY_FORM.execTimeout),
     execPathAppend: asString(exec.pathAppend, EMPTY_FORM.execPathAppend),
     webProxy: asString(web.proxy, EMPTY_FORM.webProxy),
-    webSearchProvider: asString(
-      webSearch.provider,
-      EMPTY_FORM.webSearchProvider,
-    ),
-    webSearchApiKey: asString(webSearch.apiKey, EMPTY_FORM.webSearchApiKey),
-    webSearchBaseUrl: asString(
-      webSearch.baseUrl,
-      EMPTY_FORM.webSearchBaseUrl,
-    ),
-    webSearchMaxResults: asNumberString(
-      webSearch.maxResults,
-      EMPTY_FORM.webSearchMaxResults,
-    ),
   }
 }
 

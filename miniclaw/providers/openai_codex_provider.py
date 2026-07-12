@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import os
 from collections.abc import Awaitable, Callable
 from typing import Any, AsyncGenerator
 
@@ -14,7 +15,10 @@ from oauth_cli_kit import get_token as get_codex_token
 
 from miniclaw.providers.base import LLMProvider, LLMResponse, ToolCallRequest
 
-DEFAULT_CODEX_URL = "https://chatgpt.com/backend-api/codex/responses"
+DEFAULT_CODEX_URL = os.environ.get(
+    "MINICLAW_CODEX_URL",
+    "https://chatgpt.com/backend-api/codex/responses"
+)
 DEFAULT_ORIGINATOR = "miniclaw"
 _FAILURE_MESSAGE_LIMIT = 200
 _FAILURE_SUMMARY_LIMIT = 512
@@ -107,16 +111,18 @@ def _strip_model_prefix(model: str) -> str:
     return model
 
 
-def _build_headers(account_id: str, token: str) -> dict[str, str]:
-    return {
+def _build_headers(account_id: str | None, token: str) -> dict[str, str]:
+    headers = {
         "Authorization": f"Bearer {token}",
-        "chatgpt-account-id": account_id,
         "OpenAI-Beta": "responses=experimental",
         "originator": DEFAULT_ORIGINATOR,
         "User-Agent": "miniclaw (python)",
         "accept": "text/event-stream",
         "content-type": "application/json",
     }
+    if account_id:
+        headers["chatgpt-account-id"] = account_id
+    return headers
 
 
 async def _request_codex(
@@ -126,7 +132,7 @@ async def _request_codex(
     verify: bool,
     on_content_delta: Callable[[str], Awaitable[None]] | None = None,
 ) -> tuple[str, list[ToolCallRequest], str]:
-    async with httpx.AsyncClient(timeout=60.0, verify=verify) as client:
+    async with httpx.AsyncClient(timeout=60.0, verify=verify, trust_env=False) as client:
         async with client.stream("POST", url, headers=headers, json=body) as response:
             if response.status_code != 200:
                 text = await response.aread()

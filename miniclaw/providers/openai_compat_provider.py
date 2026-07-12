@@ -11,7 +11,7 @@ from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING, Any
 
 import json_repair
-from openai import AsyncOpenAI
+from openai import AsyncOpenAI, DefaultAsyncHttpxClient
 
 from miniclaw.providers.base import LLMProvider, LLMResponse, ToolCallRequest
 
@@ -114,11 +114,17 @@ class OpenAICompatProvider(LLMProvider):
         api_base: str | None = None,
         default_model: str = "gpt-4o",
         extra_headers: dict[str, str] | None = None,
+        model_capabilities: dict[str, list[str]] | None = None,
         spec: ProviderSpec | None = None,
     ):
         super().__init__(api_key, api_base)
         self.default_model = default_model
         self.extra_headers = extra_headers or {}
+        self.model_capabilities = {
+            str(name).lower(): frozenset(params)
+            for name, params in (model_capabilities or {}).items()
+        }
+        self._models_without_tools: set[str] = set()
         self._spec = spec
 
         if api_key and spec and spec.env_key:
@@ -135,6 +141,7 @@ class OpenAICompatProvider(LLMProvider):
             api_key=api_key or "no-key",
             base_url=effective_base,
             default_headers=default_headers,
+            http_client=DefaultAsyncHttpxClient(trust_env=False),
         )
 
     def _setup_env(self, api_key: str, api_base: str | None) -> None:
@@ -221,6 +228,27 @@ class OpenAICompatProvider(LLMProvider):
     # Build kwargs
     # ------------------------------------------------------------------
 
+    def _provider_model_name(self, model: str | None) -> str:
+        model_name = model or self.default_model
+        if self._spec:
+            for prefix in (
+                self._spec.name.replace("_", "-") + "/",
+                self._spec.name + "/",
+            ):
+                if model_name.startswith(prefix):
+                    return model_name[len(prefix):].lower()
+        return model_name.lower()
+
+    def _model_supports_tools(self, model: str | None) -> bool:
+        model_name = self._provider_model_name(model)
+        if model_name in self._models_without_tools:
+            return False
+        supported = self.model_capabilities.get(model_name)
+        return supported is None or "tools" in supported
+
+    def _mark_model_tools_unsupported(self, model: str | None) -> None:
+        self._models_without_tools.add(self._provider_model_name(model))
+
     def _build_kwargs(
         self,
         messages: list[dict[str, Any]],
@@ -236,6 +264,14 @@ class OpenAICompatProvider(LLMProvider):
 
         if spec and spec.supports_prompt_caching:
             messages, tools = self._apply_cache_control(messages, tools)
+
+        if spec:
+            prefix = spec.name.replace("_", "-") + "/"
+            if model_name.startswith(prefix):
+                model_name = model_name[len(prefix):]
+            prefix_underscore = spec.name + "/"
+            if model_name.startswith(prefix_underscore):
+                model_name = model_name[len(prefix_underscore):]
 
         if spec and spec.strip_model_prefix:
             model_name = model_name.split("/")[-1]
@@ -261,7 +297,7 @@ class OpenAICompatProvider(LLMProvider):
         if reasoning_effort:
             kwargs["reasoning_effort"] = reasoning_effort
 
-        if tools:
+        if tools and self._model_supports_tools(model):
             kwargs["tools"] = tools
             kwargs["tool_choice"] = tool_choice or "auto"
 

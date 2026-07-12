@@ -71,6 +71,7 @@ class ProviderConfig(Base):
     api_key: str = ""
     api_base: str | None = None
     extra_headers: dict[str, str] | None = None  # Custom headers (e.g. APP-Code for AiHubMix)
+    model_capabilities: dict[str, list[str]] = Field(default_factory=dict)
 
 
 class ProvidersConfig(Base):
@@ -80,16 +81,13 @@ class ProvidersConfig(Base):
 
     openai: ProviderConfig = Field(default_factory=ProviderConfig)
     gemini: ProviderConfig = Field(default_factory=ProviderConfig)
+    anthropic: ProviderConfig = Field(default_factory=ProviderConfig)
+    moonshot: ProviderConfig = Field(default_factory=ProviderConfig)
+    deepseek: ProviderConfig = Field(default_factory=ProviderConfig)
+    ollama: ProviderConfig = Field(default_factory=ProviderConfig)
+    openrouter: ProviderConfig = Field(default_factory=ProviderConfig)
     openai_codex: ProviderConfig = Field(default_factory=ProviderConfig, exclude=True)  # OpenAI Codex (OAuth)
     groq: ProviderConfig = Field(default_factory=ProviderConfig)  # Kept for transcription API key
-
-
-class HeartbeatConfig(Base):
-    """Heartbeat service configuration."""
-
-    enabled: bool = True
-    interval_s: int = 30 * 60  # 30 minutes
-    keep_recent_messages: int = 8
 
 
 class GatewayConfig(Base):
@@ -97,7 +95,6 @@ class GatewayConfig(Base):
 
     host: str = "0.0.0.0"
     port: int = 18790
-    heartbeat: HeartbeatConfig = Field(default_factory=HeartbeatConfig)
 
 
 class WebSearchConfig(Base):

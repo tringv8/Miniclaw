@@ -12,6 +12,7 @@
     "show_more_channels": "More",
     "show_less_channels": "Less",
     "config": "Config",
+    "articles": "Data",
     "logs": "Logs"
   },
   "launcherLogin": {
@@ -30,7 +31,7 @@
   },
   "chat": {
     "welcome": "How can I help you today?",
-    "welcomeDesc": "Ask me about weather, settings, or any other tasks. I'm here to assist you.",
+    "welcomeDesc": "Ask me about the article data on arxiv, settings, or any other tasks. I'm here to assist you.",
     "placeholder": "Start a new message...\nPress Enter to send, Shift + Enter for a new line",
     "newChat": "New Chat",
     "notConnected": "Gateway is not running. Start it to chat.",
@@ -100,11 +101,29 @@
       "openai": {
         "description": "Supports browser OAuth, device code, and token login."
       },
+      "gemini": {
+        "description": "Supports Google OAuth2 browser login or Gemini API key."
+      },
+      "github_copilot": {
+        "description": "Supports GitHub Device Code flow. Requires a Copilot subscription."
+      },
       "anthropic": {
         "description": "Uses token login for Claude access."
       },
       "antigravity": {
         "description": "Uses browser OAuth for Google Cloud Code Assist."
+      },
+      "moonshot": {
+        "description": "Uses API key login for Moonshot (Kimi) model access."
+      },
+      "deepseek": {
+        "description": "Uses API key login for DeepSeek model access."
+      },
+      "openrouter": {
+        "description": "Enter your API key from openrouter.ai/keys."
+      },
+      "ollama": {
+        "description": "Uses local Ollama inference service without API key."
       }
     },
     "status": {
@@ -126,7 +145,14 @@
     },
     "fields": {
       "openaiToken": "OpenAI token",
-      "anthropicToken": "Anthropic token"
+      "anthropicToken": "Anthropic token",
+      "geminiToken": "Gemini API key",
+      "kimiToken": "Kimi API key",
+      "deepseekToken": "DeepSeek API key",
+      "openrouterToken": "OpenRouter API key",
+      "ollamaBase": "Ollama server URL",
+      "username": "Username",
+      "password": "Password"
     },
     "labels": {
       "account": "Account",
@@ -368,10 +394,6 @@
         "maxSteps": "Maximum number of processing steps.",
         "welcomeMessage": "Welcome message content for new sessions.",
         "allowTokenQuery": "Allow token in URL query parameters.",
-        "pingInterval": "Connection heartbeat interval in seconds.",
-        "readTimeout": "Read timeout in seconds.",
-        "writeTimeout": "Write timeout in seconds.",
-        "maxConnections": "Maximum number of concurrent connections.",
         "server": "IRC server address.",
         "tls": "Whether to enable TLS.",
         "nick": "Bot nickname.",
@@ -415,10 +437,22 @@
         "empty": "No tools are available.",
         "enable": "Enable",
         "disable": "Disable",
+        "managed_by": "Managed by miniclaw",
         "enable_success": "Tool enabled.",
         "disable_success": "Tool disabled.",
         "toggle_error": "Failed to update tool state.",
         "config_key": "Controlled by tools.{{key}}",
+        "tool_descriptions": {
+          "read_file": "Read file content from the workspace.",
+          "write_file": "Create or overwrite files in the workspace.",
+          "edit_file": "Apply targeted edits to existing files.",
+          "list_dir": "Inspect directories available to the agent.",
+          "exec": "Run shell commands inside the configured workspace.",
+          "web_fetch": "Fetch and summarize a webpage.",
+          "message": "Send a follow-up message to the active channel.",
+          "spawn": "Launch a delegated sub-agent task.",
+          "cron": "Schedule reminders and recurring jobs."
+        },
         "status": {
           "enabled": "Enabled",
           "disabled": "Disabled",
@@ -498,10 +532,6 @@
       "session_scope_per_peer_desc": "One context per user across channels.",
       "session_scope_global": "Global",
       "session_scope_global_desc": "All messages share one global context.",
-      "heartbeat_enabled": "Heartbeat",
-      "heartbeat_enabled_hint": "Send periodic heartbeat messages.",
-      "heartbeat_interval": "Heartbeat Interval (minutes)",
-      "heartbeat_interval_hint": "Interval in minutes between heartbeat signals.",
       "devices_enabled": "Enable Devices",
       "devices_enabled_hint": "Enable hardware-device integrations.",
       "monitor_usb": "Monitor USB",
@@ -554,17 +584,11 @@
       "timezone_label": "Timezone",
       "timezone_hint": "IANA timezone name used by cron and runtime context.",
       "gateway_title": "Gateway",
-      "gateway_desc": "Network listener and background heartbeat settings.",
+      "gateway_desc": "Network listener settings.",
       "gateway_host_label": "Gateway host",
       "gateway_host_hint": "Interface that the miniclaw gateway binds to.",
       "gateway_port_label": "Gateway port",
       "gateway_port_hint": "HTTP port exposed by the miniclaw gateway.",
-      "heartbeat_label": "Heartbeat enabled",
-      "heartbeat_hint_toggle": "Run periodic background checks using HEARTBEAT.md.",
-      "heartbeat_interval_label": "Heartbeat interval seconds",
-      "heartbeat_interval_label_hint": "Delay between heartbeat checks.",
-      "heartbeat_keep_label": "Keep recent messages",
-      "heartbeat_keep_hint": "Number of recent messages retained for heartbeat execution.",
       "exec_title": "Exec tool",
       "exec_desc": "Shell execution policy used by the exec tool.",
       "exec_enable_label": "Enable exec",
@@ -573,18 +597,6 @@
       "exec_timeout_hint": "Maximum runtime for a single exec command.",
       "exec_path_label": "PATH append",
       "exec_path_hint": "Extra directories appended to PATH when exec runs.",
-      "web_title": "Web tools",
-      "web_desc": "Proxy and search provider settings used by web_search and web_fetch.",
-      "web_proxy_label": "Proxy",
-      "web_proxy_hint": "Optional HTTP or SOCKS proxy.",
-      "web_search_provider_label": "Search provider",
-      "web_search_provider_hint": "One of brave, tavily, duckduckgo, searxng, or jina.",
-      "web_search_api_key_label": "Search API key",
-      "web_search_api_key_hint": "Leave blank for providers that do not require an API key.",
-      "web_search_base_url_label": "Search base URL",
-      "web_search_base_url_hint": "Used for providers such as SearXNG.",
-      "web_max_results_label": "Max results",
-      "web_max_results_hint": "Maximum number of search results returned to the agent.",
       "launcher_title": "Launcher access",
       "launcher_desc": "Settings for the FastAPI dashboard service itself.",
       "launcher_public_label": "Public access",

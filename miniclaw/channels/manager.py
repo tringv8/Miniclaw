@@ -149,6 +149,20 @@ class ChannelManager:
 
                 channel = self.channels.get(msg.channel)
                 if channel:
+                    # Parse and save articles if this is a final message containing paper information
+                    if (
+                        not msg.metadata.get("_progress")
+                        and not msg.metadata.get("_stream_delta")
+                        and not msg.metadata.get("_stream_end")
+                        and msg.content
+                    ):
+                        try:
+                            from miniclaw.utils.articles import process_and_save_articles_from_text
+                            loop = asyncio.get_running_loop()
+                            loop.run_in_executor(None, process_and_save_articles_from_text, msg.content)
+                        except Exception as ex:
+                            logger.warning("Failed to auto-process articles from outbound message: {}", ex)
+
                     await self._send_with_retry(channel, msg)
                 else:
                     logger.warning("Unknown channel: {}", msg.channel)

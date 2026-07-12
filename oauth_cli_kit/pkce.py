@@ -52,6 +52,12 @@ def _parse_authorization_input(raw: str) -> tuple[str | None, str | None]:
     return value, None
 
 
+FALLBACK_CLAIM_PATHS = [
+    "https://api.openai.com/auth",
+    "https://auth.openai.com/auth",
+]
+
+
 def _decode_account_id(
     access_token: str,
     jwt_claim_path: str | None,
@@ -62,12 +68,22 @@ def _decode_account_id(
     parts = access_token.split(".")
     if len(parts) != 3:
         return None
-    payload = json.loads(_decode_base64url(parts[1]).decode("utf-8"))
-    auth = payload.get(jwt_claim_path) or {}
-    account_id = auth.get(account_id_claim)
-    if not account_id:
+    try:
+        payload = json.loads(_decode_base64url(parts[1]).decode("utf-8"))
+    except Exception:
         return None
-    return str(account_id)
+
+    paths = [jwt_claim_path]
+    for p in FALLBACK_CLAIM_PATHS:
+        if p not in paths:
+            paths.append(p)
+
+    for path in paths:
+        auth = payload.get(path) or {}
+        account_id = auth.get(account_id_claim)
+        if account_id:
+            return str(account_id)
+    return None
 
 
 def _parse_token_payload(payload: dict[str, Any], missing_message: str) -> tuple[str, str, int]:

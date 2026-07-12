@@ -25,7 +25,7 @@ from miniclaw.agent.tools.message import MessageTool
 from miniclaw.agent.tools.registry import ToolRegistry
 from miniclaw.agent.tools.shell import ExecTool
 from miniclaw.agent.tools.spawn import SpawnTool
-from miniclaw.agent.tools.web import WebFetchTool, WebSearchTool
+from miniclaw.agent.tools.web import WebFetchTool
 from miniclaw.bus.events import InboundMessage, OutboundMessage
 from miniclaw.command import CommandContext, CommandRouter, register_builtin_commands
 from miniclaw.bus.queue import MessageBus
@@ -33,7 +33,7 @@ from miniclaw.providers.base import LLMProvider
 from miniclaw.session.manager import Session, SessionManager
 
 if TYPE_CHECKING:
-    from miniclaw.config.schema import ChannelsConfig, ExecToolConfig, WebSearchConfig
+    from miniclaw.config.schema import ChannelsConfig, ExecToolConfig
     from miniclaw.cron.service import CronService
 
 
@@ -59,7 +59,6 @@ class AgentLoop:
         model: str | None = None,
         max_iterations: int = 40,
         context_window_tokens: int = 65_536,
-        web_search_config: WebSearchConfig | None = None,
         web_proxy: str | None = None,
         exec_config: ExecToolConfig | None = None,
         cron_service: CronService | None = None,
@@ -69,7 +68,7 @@ class AgentLoop:
         channels_config: ChannelsConfig | None = None,
         timezone: str | None = None,
     ):
-        from miniclaw.config.schema import ExecToolConfig, WebSearchConfig
+        from miniclaw.config.schema import ExecToolConfig
 
         self.bus = bus
         self.channels_config = channels_config
@@ -78,7 +77,6 @@ class AgentLoop:
         self.model = model or provider.get_default_model()
         self.max_iterations = max_iterations
         self.context_window_tokens = context_window_tokens
-        self.web_search_config = web_search_config or WebSearchConfig()
         self.web_proxy = web_proxy
         self.exec_config = exec_config or ExecToolConfig()
         self.cron_service = cron_service
@@ -95,7 +93,6 @@ class AgentLoop:
             workspace=workspace,
             bus=bus,
             model=self.model,
-            web_search_config=self.web_search_config,
             web_proxy=web_proxy,
             exec_config=self.exec_config,
             restrict_to_workspace=restrict_to_workspace,
@@ -142,7 +139,6 @@ class AgentLoop:
                 restrict_to_workspace=self.restrict_to_workspace,
                 path_append=self.exec_config.path_append,
             ))
-        self.tools.register(WebSearchTool(config=self.web_search_config, proxy=self.web_proxy))
         self.tools.register(WebFetchTool(proxy=self.web_proxy))
         self.tools.register(MessageTool(send_callback=self.bus.publish_outbound))
         self.tools.register(SpawnTool(manager=self.subagents))
@@ -179,6 +175,19 @@ class AgentLoop:
             if tool := self.tools.get(name):
                 if hasattr(tool, "set_context"):
                     tool.set_context(channel, chat_id, *([message_id] if name == "message" else []))
+
+    def _active_provider_name(self) -> str:
+        """Return the provider identity currently backing this loop."""
+        spec = getattr(self.provider, "_spec", None)
+        if spec and getattr(spec, "name", None):
+            return str(spec.name)
+        provider_names = {
+            "OpenAICodexProvider": "openai_codex",
+            "AnthropicProvider": "anthropic",
+            "AzureOpenAIProvider": "azure_openai",
+            "OpenAICompatProvider": "openai_compatible",
+        }
+        return provider_names.get(type(self.provider).__name__, type(self.provider).__name__)
 
     @staticmethod
     def _strip_think(text: str | None) -> str | None:
@@ -312,6 +321,7 @@ class AgentLoop:
         async with lock, gate:
             try:
                 on_stream = on_stream_end = None
+                stream_started = False
                 if msg.metadata.get("_wants_stream"):
                     # Split one answer into distinct stream segments.
                     stream_base_id = f"{msg.session_key}:{time.time_ns()}"
@@ -321,6 +331,8 @@ class AgentLoop:
                         return f"{stream_base_id}:{stream_segment}"
 
                     async def on_stream(delta: str) -> None:
+                        nonlocal stream_started
+                        stream_started = True
                         await self.bus.publish_outbound(OutboundMessage(
                             channel=msg.channel, chat_id=msg.chat_id,
                             content=delta,
@@ -347,6 +359,8 @@ class AgentLoop:
                     msg, on_stream=on_stream, on_stream_end=on_stream_end,
                 )
                 if response is not None:
+                    if not stream_started:
+                        response.metadata.pop("_streamed", None)
                     await self.bus.publish_outbound(response)
                 elif msg.channel == "cli":
                     await self.bus.publish_outbound(OutboundMessage(
@@ -446,6 +460,8 @@ class AgentLoop:
             current_message=msg.content,
             media=msg.media if msg.media else None,
             channel=msg.channel, chat_id=msg.chat_id,
+            active_model=self.model,
+            active_provider=self._active_provider_name(),
         )
 
         async def _bus_progress(content: str, *, tool_hint: bool = False) -> None:
@@ -467,6 +483,16 @@ class AgentLoop:
 
         if final_content is None:
             final_content = "I've completed processing but have no response to give."
+        elif final_content.startswith(("Error:", "Error calling LLM:")):
+            if self.provider._is_tools_unsupported_error(final_content):
+                final_content = (
+                    f"Model `{self.model}` không hỗ trợ tool calling trên OpenRouter."
+                )
+            else:
+                final_content = (
+                    f"Không thể gọi model `{self.model}` lúc này. "
+                    "Vui lòng kiểm tra log để xem lỗi từ provider."
+                )
 
         self._save_turn(session, all_msgs, 1 + len(history))
         self.sessions.save(session)

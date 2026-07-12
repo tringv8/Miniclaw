@@ -1,6 +1,6 @@
 ---
 name: clawhub
-description: Search and install agent skills from ClawHub, the public skill registry.
+description: Tìm kiếm và cài đặt kỹ năng tác nhân từ ClawHub, kho kỹ năng công khai.
 homepage: https://clawhub.ai
 metadata: {"miniclaw":{"emoji":"🐾"}}
 ---

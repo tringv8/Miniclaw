@@ -9,6 +9,26 @@ export interface MiniclawChatMessage {
   payload?: Record<string, unknown>
 }
 
+function messageTimestamp(message: MiniclawChatMessage): number {
+  if (
+    message.timestamp !== undefined &&
+    Number.isFinite(Number(message.timestamp))
+  ) {
+    return normalizeUnixTimestamp(Number(message.timestamp))
+  }
+
+  return Date.now()
+}
+
+function errorContent(payload: Record<string, unknown>): string {
+  const rawMessage = payload.message
+  if (typeof rawMessage === "string" && rawMessage.trim()) {
+    return rawMessage.trim()
+  }
+
+  return "Chat request failed."
+}
+
 export function handleMiniclawChatMessage(
   message: MiniclawChatMessage,
   expectedSessionId: string,
@@ -23,11 +43,7 @@ export function handleMiniclawChatMessage(
     case "message.create": {
       const content = (payload.content as string) || ""
       const messageId = (payload.message_id as string) || `mini-${Date.now()}`
-      const timestamp =
-        message.timestamp !== undefined &&
-        Number.isFinite(Number(message.timestamp))
-          ? normalizeUnixTimestamp(Number(message.timestamp))
-          : Date.now()
+      const timestamp = messageTimestamp(message)
 
       updateChatStore((prev) => ({
         messages: [
@@ -69,7 +85,18 @@ export function handleMiniclawChatMessage(
 
     case "error":
       console.error("Miniclaw chat error:", payload)
-      updateChatStore({ isTyping: false })
+      updateChatStore((prev) => ({
+        messages: [
+          ...prev.messages,
+          {
+            id: message.id || `mini-error-${Date.now()}`,
+            role: "assistant",
+            content: errorContent(payload),
+            timestamp: messageTimestamp(message),
+          },
+        ],
+        isTyping: false,
+      }))
       break
 
     case "pong":

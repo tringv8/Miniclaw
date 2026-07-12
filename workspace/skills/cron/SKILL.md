@@ -1,6 +1,6 @@
 ---
 name: cron
-description: Schedule reminders and recurring tasks.
+description: Lên lịch nhắc nhở và các tác vụ định kỳ.
 ---
 
 # Cron

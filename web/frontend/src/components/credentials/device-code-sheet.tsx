@@ -34,9 +34,13 @@ export function DeviceCodeSheet({
         className="data-[side=right]:!w-full data-[side=right]:sm:!w-[480px] data-[side=right]:sm:!max-w-[480px]"
       >
         <SheetHeader className="border-b-muted border-b px-6 py-5">
-          <SheetTitle>{t("credentials.device.title")}</SheetTitle>
+          <SheetTitle>
+            {flow?.provider === "github_copilot" ? "Đăng nhập GitHub Copilot bằng mã thiết bị" : t("credentials.device.title")}
+          </SheetTitle>
           <SheetDescription>
-            {t("credentials.device.description")}
+            {flow?.provider === "github_copilot"
+              ? "Mở trang xác minh của GitHub và nhập mã bên dưới. Trang này sẽ tự động làm mới."
+              : t("credentials.device.description")}
           </SheetDescription>
         </SheetHeader>
 

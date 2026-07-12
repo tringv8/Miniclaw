@@ -79,6 +79,22 @@ def _save_token_file(path: Path, token: OAuthToken) -> None:
         pass
 
 
+def _get_jwt_expiry_ms(access_token: str) -> int | None:
+    """Extract exp claim from JWT access token."""
+    try:
+        parts = access_token.split(".")
+        if len(parts) != 3:
+            return None
+        import base64
+        import json
+        padding = "=" * (-len(parts[1]) % 4)
+        payload = json.loads(base64.urlsafe_b64decode(parts[1] + padding))
+        exp = payload.get("exp")
+        return int(exp) * 1000 if exp else None
+    except Exception:
+        return None
+
+
 def _try_import_codex_cli_token(path: Path) -> OAuthToken | None:
     codex_path = Path.home() / ".codex" / "auth.json"
     if not codex_path.exists():
@@ -93,9 +109,11 @@ def _try_import_codex_cli_token(path: Path) -> OAuthToken | None:
             return None
         try:
             mtime = codex_path.stat().st_mtime
-            expires = int(mtime * 1000 + 60 * 60 * 1000)
+            fallback_expires = int(mtime * 1000 + 60 * 60 * 1000)
         except Exception:
-            expires = int(time.time() * 1000 + 60 * 60 * 1000)
+            fallback_expires = int(time.time() * 1000 + 60 * 60 * 1000)
+        
+        expires = _get_jwt_expiry_ms(str(access)) or fallback_expires
         token = OAuthToken(
             access=str(access),
             refresh=str(refresh),
@@ -151,18 +169,26 @@ class _FileLock:
         self._path.parent.mkdir(parents=True, exist_ok=True)
         self._fp = open(self._path, "a+")
         try:
-            import fcntl
-
-            fcntl.flock(self._fp.fileno(), fcntl.LOCK_EX)
+            if os.name == "nt":
+                import msvcrt
+                self._fp.seek(0)
+                msvcrt.locking(self._fp.fileno(), msvcrt.LK_LOCK, 1)
+            else:
+                import fcntl
+                fcntl.flock(self._fp.fileno(), fcntl.LOCK_EX)
         except Exception:
             pass
         return self
 
     def __exit__(self, exc_type, exc, tb) -> None:
         try:
-            import fcntl
-
-            fcntl.flock(self._fp.fileno(), fcntl.LOCK_UN)
+            if os.name == "nt":
+                import msvcrt
+                self._fp.seek(0)
+                msvcrt.locking(self._fp.fileno(), msvcrt.LK_UNLCK, 1)
+            else:
+                import fcntl
+                fcntl.flock(self._fp.fileno(), fcntl.LOCK_UN)
         except Exception:
             pass
         try:

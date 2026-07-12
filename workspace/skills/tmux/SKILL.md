@@ -1,6 +1,6 @@
 ---
 name: tmux
-description: Remote-control tmux sessions for interactive CLIs by sending keystrokes and scraping pane output.
+description: Điều khiển từ xa các phiên tmux cho CLI tương tác bằng cách gửi phím tắt và đọc output của pane.
 metadata: {"miniclaw":{"emoji":"🧵","os":["darwin","linux"],"requires":{"bins":["tmux"]}}}
 ---
 

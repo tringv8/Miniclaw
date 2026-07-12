@@ -1,6 +1,6 @@
 ---
 name: skill-creator
-description: Create or update AgentSkills. Use when designing, structuring, or packaging skills with scripts, references, and assets.
+description: Tạo hoặc cập nhật AgentSkills. Dùng khi thiết kế, cấu trúc hoặc đóng gói kỹ năng kèm theo scripts, tài liệu tham khảo và tài nguyên.
 ---
 
 # Skill Creator

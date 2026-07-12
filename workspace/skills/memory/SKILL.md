@@ -1,6 +1,6 @@
 ---
 name: memory
-description: Two-layer memory system with grep-based recall.
+description: Hệ thống bộ nhớ hai lớp với khả năng tìm kiếm bằng grep.
 always: true
 ---
 

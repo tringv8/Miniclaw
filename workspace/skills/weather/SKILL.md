@@ -1,6 +1,6 @@
 ---
 name: weather
-description: Get current weather and forecasts (no API key required).
+description: Xem thời tiết hiện tại và dự báo (không cần API key).
 homepage: https://wttr.in/:help
 metadata: {"miniclaw":{"emoji":"🌤️","requires":{"bins":["curl"]}}}
 ---

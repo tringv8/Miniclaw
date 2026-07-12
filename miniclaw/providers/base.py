@@ -78,7 +78,7 @@ class LLMProvider(ABC):
     while maintaining a consistent interface.
     """
 
-    _CHAT_RETRY_DELAYS = (1, 2, 4)
+    _CHAT_RETRY_DELAYS = (1, 2)
     _TRANSIENT_ERROR_MARKERS = (
         "429",
         "rate limit",
@@ -197,6 +197,20 @@ class LLMProvider(ABC):
         return any(marker in err for marker in cls._TRANSIENT_ERROR_MARKERS)
 
     @staticmethod
+    def _is_tools_unsupported_error(content: str | None) -> bool:
+        """Return True when an OpenAI-compatible backend rejects tool calling."""
+        err = (content or "").lower()
+        return (
+            "no endpoints found that support tool use" in err
+            or "does not support tools" in err
+            or "tool use is not supported" in err
+            or "tool calling is not supported" in err
+        )
+
+    def _mark_model_tools_unsupported(self, model: str | None) -> None:
+        """Allow providers to cache a tool-compatibility failure."""
+
+    @staticmethod
     def _strip_image_content(messages: list[dict[str, Any]]) -> list[dict[str, Any]] | None:
         """Replace image_url blocks with text placeholder. Returns None if no images found."""
         found = False
@@ -289,11 +303,22 @@ class LLMProvider(ABC):
             on_content_delta=on_content_delta,
         )
 
-        for attempt, delay in enumerate(self._CHAT_RETRY_DELAYS, start=1):
+        max_attempts = len(self._CHAT_RETRY_DELAYS) + 1
+        for attempt in range(1, max_attempts + 1):
             response = await self._safe_chat_stream(**kw)
 
             if response.finish_reason != "error":
                 return response
+
+            if tools and self._is_tools_unsupported_error(response.content):
+                self._mark_model_tools_unsupported(model)
+                logger.warning(
+                    "Model {} does not support tools; retrying the same model without tools",
+                    model,
+                )
+                return await self._safe_chat_stream(
+                    **{**kw, "tools": None, "tool_choice": None}
+                )
 
             if not self._is_transient_error(response.content):
                 stripped = self._strip_image_content(messages)
@@ -302,14 +327,17 @@ class LLMProvider(ABC):
                     return await self._safe_chat_stream(**{**kw, "messages": stripped})
                 return response
 
+            if attempt == max_attempts:
+                return response
+            delay = self._CHAT_RETRY_DELAYS[attempt - 1]
             logger.warning(
                 "LLM transient error (attempt {}/{}), retrying in {}s: {}",
-                attempt, len(self._CHAT_RETRY_DELAYS), delay,
+                attempt, max_attempts, delay,
                 (response.content or "")[:120].lower(),
             )
             await asyncio.sleep(delay)
 
-        return await self._safe_chat_stream(**kw)
+        return response
 
     async def chat_with_retry(
         self,
@@ -340,11 +368,22 @@ class LLMProvider(ABC):
             reasoning_effort=reasoning_effort, tool_choice=tool_choice,
         )
 
-        for attempt, delay in enumerate(self._CHAT_RETRY_DELAYS, start=1):
+        max_attempts = len(self._CHAT_RETRY_DELAYS) + 1
+        for attempt in range(1, max_attempts + 1):
             response = await self._safe_chat(**kw)
 
             if response.finish_reason != "error":
                 return response
+
+            if tools and self._is_tools_unsupported_error(response.content):
+                self._mark_model_tools_unsupported(model)
+                logger.warning(
+                    "Model {} does not support tools; retrying the same model without tools",
+                    model,
+                )
+                return await self._safe_chat(
+                    **{**kw, "tools": None, "tool_choice": None}
+                )
 
             if not self._is_transient_error(response.content):
                 stripped = self._strip_image_content(messages)
@@ -353,14 +392,17 @@ class LLMProvider(ABC):
                     return await self._safe_chat(**{**kw, "messages": stripped})
                 return response
 
+            if attempt == max_attempts:
+                return response
+            delay = self._CHAT_RETRY_DELAYS[attempt - 1]
             logger.warning(
                 "LLM transient error (attempt {}/{}), retrying in {}s: {}",
-                attempt, len(self._CHAT_RETRY_DELAYS), delay,
+                attempt, max_attempts, delay,
                 (response.content or "")[:120].lower(),
             )
             await asyncio.sleep(delay)
 
-        return await self._safe_chat(**kw)
+        return response
 
     @abstractmethod
     def get_default_model(self) -> str:

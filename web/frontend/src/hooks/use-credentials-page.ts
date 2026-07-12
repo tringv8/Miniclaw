@@ -17,6 +17,12 @@ type FlowWatchMode = "" | "status" | "poll"
 function getProviderLabel(provider: OAuthProvider | ""): string {
   if (provider === "openai") return "OpenAI"
   if (provider === "anthropic") return "Anthropic"
+  if (provider === "gemini") return "Google Gemini"
+  if (provider === "github_copilot") return "GitHub Copilot"
+  if (provider === "moonshot") return "Kimi (Moonshot AI)"
+  if (provider === "deepseek") return "DeepSeek"
+  if (provider === "ollama") return "Ollama (Local)"
+  if (provider === "openrouter") return "OpenRouter"
   if (provider === "google-antigravity") return "Google Antigravity"
   return ""
 }
@@ -37,6 +43,13 @@ export function useCredentialsPage() {
 
   const [openAIToken, setOpenAIToken] = useState("")
   const [anthropicToken, setAnthropicToken] = useState("")
+  const [geminiToken, setGeminiToken] = useState("")
+  const [kimiToken, setKimiToken] = useState("")
+  const [deepseekToken, setDeepseekToken] = useState("")
+  const [openrouterToken, setOpenrouterToken] = useState("")
+  const [ollamaBase, setOllamaBase] = useState("http://localhost:11434/v1")
+  const [ollamaUsername, setOllamaUsername] = useState("")
+  const [ollamaPassword, setOllamaPassword] = useState("")
 
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
   const [logoutConfirmProvider, setLogoutConfirmProvider] = useState<
@@ -50,6 +63,23 @@ export function useCredentialsPage() {
     try {
       const data = await getOAuthProviders()
       setProviders(data.providers)
+
+      const ollama = data.providers.find((p) => p.provider === "ollama")
+      if (ollama && ollama.api_base) {
+        try {
+          const url = new URL(ollama.api_base)
+          setOllamaUsername(decodeURIComponent(url.username || ""))
+          setOllamaPassword(decodeURIComponent(url.password || ""))
+          url.username = ""
+          url.password = ""
+          setOllamaBase(url.toString())
+        } catch {
+          setOllamaBase(ollama.api_base)
+          setOllamaUsername("")
+          setOllamaPassword("")
+        }
+      }
+
       setError("")
     } catch (err) {
       setError(
@@ -167,7 +197,13 @@ export function useCredentialsPage() {
   }, [providers])
 
   const openaiStatus = providersMap.get("openai")
+  const geminiStatus = providersMap.get("gemini")
+  const copilotStatus = providersMap.get("github_copilot")
   const anthropicStatus = providersMap.get("anthropic")
+  const kimiStatus = providersMap.get("moonshot")
+  const deepseekStatus = providersMap.get("deepseek")
+  const openrouterStatus = providersMap.get("openrouter")
+  const ollamaStatus = providersMap.get("ollama")
   const antigravityStatus = providersMap.get("google-antigravity")
 
   const bumpActionToken = useCallback(() => {
@@ -295,6 +331,91 @@ export function useCredentialsPage() {
         if (provider === "anthropic") {
           setAnthropicToken("")
         }
+        if (provider === "gemini") {
+          setGeminiToken("")
+        }
+        if (provider === "moonshot") {
+          setKimiToken("")
+        }
+        if (provider === "deepseek") {
+          setDeepseekToken("")
+        }
+        if (provider === "openrouter") {
+          setOpenrouterToken("")
+        }
+        await loadProviders()
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : t("credentials.errors.loginFailed"),
+        )
+      } finally {
+        setActiveAction("")
+      }
+    },
+    [loadProviders, t],
+  )
+
+  const startCopilotDeviceCode = useCallback(async () => {
+    const actionToken = bumpActionToken()
+    setActiveAction("github_copilot:device")
+    setError("")
+
+    try {
+      const resp = await loginOAuth({
+        provider: "github_copilot",
+        method: "device_code",
+      })
+      if (!isActionTokenCurrent(actionToken)) {
+        return
+      }
+      if (!resp.flow_id || !resp.user_code || !resp.verify_url) {
+        throw new Error(t("credentials.errors.invalidDeviceResponse"))
+      }
+
+      const flow: OAuthFlowState = {
+        flow_id: resp.flow_id,
+        provider: "github_copilot",
+        method: "device_code",
+        status: "pending",
+        user_code: resp.user_code,
+        verify_url: resp.verify_url,
+        interval: resp.interval,
+        expires_at: resp.expires_at,
+      }
+
+      setDeviceFlow(flow)
+      setDeviceSheetOpen(true)
+      setActiveFlow(flow)
+      setWatchFlowID(resp.flow_id)
+      setWatchMode("poll")
+      setPollIntervalMs(Math.max(1000, (resp.interval ?? 5) * 1000))
+    } catch (err) {
+      if (!isActionTokenCurrent(actionToken)) {
+        return
+      }
+      setActiveAction("")
+      setError(
+        err instanceof Error
+          ? err.message
+          : t("credentials.errors.loginFailed"),
+      )
+    }
+  }, [bumpActionToken, isActionTokenCurrent, t])
+
+  const saveOllamaLocal = useCallback(
+    async (apiBase: string, username?: string, password?: string) => {
+      setActiveAction("ollama:local")
+      setError("")
+      try {
+        await loginOAuth({
+          provider: "ollama",
+          method: "local",
+          api_base: apiBase,
+          username,
+          password,
+        })
         await loadProviders()
       } catch (err) {
         setError(
@@ -362,7 +483,7 @@ export function useCredentialsPage() {
       if (watchMode === "poll") {
         setWatchFlowID("")
         setWatchMode("")
-        if (activeAction === "openai:device") {
+        if (activeAction === "openai:device" || activeAction === "github_copilot:device") {
           setActiveAction("")
         }
       }
@@ -414,8 +535,21 @@ export function useCredentialsPage() {
     flowHint,
     openAIToken,
     anthropicToken,
+    geminiToken,
+    kimiToken,
+    deepseekToken,
+    openrouterToken,
+    ollamaBase,
+    ollamaUsername,
+    ollamaPassword,
     openaiStatus,
+    geminiStatus,
+    copilotStatus,
     anthropicStatus,
+    kimiStatus,
+    deepseekStatus,
+    openrouterStatus,
+    ollamaStatus,
     antigravityStatus,
     logoutDialogOpen,
     logoutConfirmProvider,
@@ -424,10 +558,19 @@ export function useCredentialsPage() {
     deviceFlow,
     setOpenAIToken,
     setAnthropicToken,
+    setGeminiToken,
+    setKimiToken,
+    setDeepseekToken,
+    setOpenrouterToken,
+    setOllamaBase,
+    setOllamaUsername,
+    setOllamaPassword,
     startBrowserOAuth,
     startOpenAIDeviceCode,
+    startCopilotDeviceCode,
     stopLoading,
     saveToken,
+    saveOllamaLocal,
     askLogout,
     handleConfirmLogout,
     handleLogoutDialogOpenChange,

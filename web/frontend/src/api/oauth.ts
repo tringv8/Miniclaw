@@ -18,6 +18,7 @@ export interface OAuthProviderStatus {
   supports_token_input?: boolean
   supports_logout?: boolean
   setup_command?: string
+  api_base?: string
 }
 
 export interface OAuthFlowState {
@@ -36,6 +37,9 @@ export interface OAuthLoginRequest {
   provider: OAuthProvider
   method: OAuthMethod
   token?: string
+  api_base?: string
+  username?: string
+  password?: string
 }
 
 export interface OAuthLoginResponse {

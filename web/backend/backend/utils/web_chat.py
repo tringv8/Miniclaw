@@ -72,6 +72,7 @@ def _make_provider(config: Config):
             api_base=config.get_api_base(model),
             default_model=model,
             extra_headers=provider_config.extra_headers if provider_config else None,
+            model_capabilities=provider_config.model_capabilities if provider_config else None,
             spec=spec,
         )
 
@@ -113,7 +114,6 @@ class WebChatRuntime:
             model=config.agents.defaults.model,
             max_iterations=config.agents.defaults.max_tool_iterations,
             context_window_tokens=config.agents.defaults.context_window_tokens,
-            web_search_config=config.tools.web.search,
             web_proxy=config.tools.web.proxy or None,
             exec_config=config.tools.exec,
             cron_service=cron,

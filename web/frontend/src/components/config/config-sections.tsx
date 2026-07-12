@@ -268,49 +268,6 @@ export function GatewaySection({
         />
       </Field>
 
-      <SwitchCardField
-        label={t("pages.config.heartbeat_label")}
-        hint={t("pages.config.heartbeat_hint_toggle")}
-        layout="setting-row"
-        checked={form.heartbeatEnabled}
-        onCheckedChange={(checked) =>
-          onFieldChange("heartbeatEnabled", checked)
-        }
-      />
-
-      {form.heartbeatEnabled ? (
-        <>
-          <Field
-            label={t("pages.config.heartbeat_interval_label")}
-            hint={t("pages.config.heartbeat_interval_label_hint")}
-            layout="setting-row"
-          >
-            <Input
-              type="number"
-              min={1}
-              value={form.heartbeatIntervalSeconds}
-              onChange={(e) =>
-                onFieldChange("heartbeatIntervalSeconds", e.target.value)
-              }
-            />
-          </Field>
-
-          <Field
-            label={t("pages.config.heartbeat_keep_label")}
-            hint={t("pages.config.heartbeat_keep_hint")}
-            layout="setting-row"
-          >
-            <Input
-              type="number"
-              min={0}
-              value={form.heartbeatKeepRecentMessages}
-              onChange={(e) =>
-                onFieldChange("heartbeatKeepRecentMessages", e.target.value)
-              }
-            />
-          </Field>
-        </>
-      ) : null}
     </ConfigSectionCard>
   )
 }
@@ -360,85 +317,6 @@ export function ExecSection({ form, onFieldChange }: ExecSectionProps) {
           className="min-h-[88px]"
           onChange={(e) => onFieldChange("execPathAppend", e.target.value)}
           placeholder="C:\\Tools\\bin"
-        />
-      </Field>
-    </ConfigSectionCard>
-  )
-}
-
-interface WebSearchSectionProps {
-  form: CoreConfigForm
-  onFieldChange: UpdateCoreField
-}
-
-export function WebSearchSection({
-  form,
-  onFieldChange,
-}: WebSearchSectionProps) {
-  const { t } = useTranslation()
-  return (
-    <ConfigSectionCard
-      title={t("pages.config.web_title")}
-      description={t("pages.config.web_desc")}
-    >
-      <Field
-        label={t("pages.config.web_proxy_label")}
-        hint={t("pages.config.web_proxy_hint")}
-        layout="setting-row"
-      >
-        <Input
-          value={form.webProxy}
-          onChange={(e) => onFieldChange("webProxy", e.target.value)}
-          placeholder="http://127.0.0.1:7890"
-        />
-      </Field>
-
-      <Field
-        label={t("pages.config.web_search_provider_label")}
-        hint={t("pages.config.web_search_provider_hint")}
-        layout="setting-row"
-      >
-        <Input
-          value={form.webSearchProvider}
-          onChange={(e) => onFieldChange("webSearchProvider", e.target.value)}
-          placeholder="brave"
-        />
-      </Field>
-
-      <Field
-        label={t("pages.config.web_search_api_key_label")}
-        hint={t("pages.config.web_search_api_key_hint")}
-        layout="setting-row"
-      >
-        <Input
-          value={form.webSearchApiKey}
-          onChange={(e) => onFieldChange("webSearchApiKey", e.target.value)}
-          placeholder={t("pages.config.web_search_api_key_label")}
-        />
-      </Field>
-
-      <Field
-        label={t("pages.config.web_search_base_url_label")}
-        hint={t("pages.config.web_search_base_url_hint")}
-        layout="setting-row"
-      >
-        <Input
-          value={form.webSearchBaseUrl}
-          onChange={(e) => onFieldChange("webSearchBaseUrl", e.target.value)}
-          placeholder="https://search.example.com"
-        />
-      </Field>
-
-      <Field
-        label={t("pages.config.web_max_results_label")}
-        hint={t("pages.config.web_max_results_hint")}
-        layout="setting-row"
-      >
-        <Input
-          type="number"
-          min={1}
-          value={form.webSearchMaxResults}
-          onChange={(e) => onFieldChange("webSearchMaxResults", e.target.value)}
         />
       </Field>
     </ConfigSectionCard>

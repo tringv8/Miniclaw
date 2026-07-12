@@ -56,6 +56,7 @@ export function ModelsPage() {
     null,
   )
 
+
   const fetchModels = useCallback(async () => {
     try {
       const data = await getModels()
@@ -160,6 +161,7 @@ export function ModelsPage() {
           <p className="text-muted-foreground mt-1 text-sm">
             {t("models.description")}
           </p>
+
         </div>
 
         {loading && (

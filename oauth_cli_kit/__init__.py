@@ -8,10 +8,11 @@ from oauth_cli_kit.flow import (
     refresh_token,
 )
 from oauth_cli_kit.models import OAuthProviderConfig, OAuthToken
-from oauth_cli_kit.providers import OPENAI_CODEX_PROVIDER
+from oauth_cli_kit.providers import OPENAI_CODEX_PROVIDER, GOOGLE_GEMINI_PROVIDER
 
 __all__ = [
     "OPENAI_CODEX_PROVIDER",
+    "GOOGLE_GEMINI_PROVIDER",
     "OAuthProviderConfig",
     "OAuthToken",
     "build_authorize_url",

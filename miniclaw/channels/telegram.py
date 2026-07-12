@@ -11,9 +11,9 @@ from typing import Any, Literal
 
 from loguru import logger
 from pydantic import Field
-from telegram import BotCommand, ReactionTypeEmoji, ReplyParameters, Update
+from telegram import BotCommand, ReactionTypeEmoji, ReplyParameters, Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.error import BadRequest, TimedOut
-from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
+from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters, CallbackQueryHandler
 from telegram.request import HTTPXRequest
 
 from miniclaw.bus.events import OutboundMessage
@@ -213,6 +213,7 @@ class TelegramChannel(BaseChannel):
         BotCommand("new", "Bắt đầu cuộc trò chuyện mới"),
         BotCommand("stop", "Dừng tác vụ hiện tại"),
         BotCommand("help", "Hiển thị các lệnh có sẵn"),
+        BotCommand("model", "Chọn mô hình OpenRouter"),
         BotCommand("restart", "Khởi động lại bot"),
         BotCommand("status", "Hiển thị trạng thái bot"),
     ]
@@ -302,7 +303,9 @@ class TelegramChannel(BaseChannel):
         self._app.add_handler(CommandHandler("stop", self._forward_command))
         self._app.add_handler(CommandHandler("restart", self._forward_command))
         self._app.add_handler(CommandHandler("status", self._forward_command))
+        self._app.add_handler(CommandHandler("model", self._forward_command))
         self._app.add_handler(CommandHandler("help", self._on_help))
+        self._app.add_handler(CallbackQueryHandler(self._on_callback_query))
 
         # Add message handler for text, photos, voice, documents
         self._app.add_handler(
@@ -452,8 +455,24 @@ class TelegramChannel(BaseChannel):
 
         # Send text content
         if msg.content and msg.content != "[empty message]":
-            for chunk in split_message(msg.content, TELEGRAM_MAX_MESSAGE_LEN):
-                await self._send_text(chat_id, chunk, reply_params, thread_kwargs)
+            chunks = split_message(msg.content, TELEGRAM_MAX_MESSAGE_LEN)
+            for i, chunk in enumerate(chunks):
+                markup = None
+                if i == len(chunks) - 1:
+                    if inline_kb := msg.metadata.get("inline_keyboard"):
+                        keyboard = []
+                        for row in inline_kb:
+                            keyboard_row = []
+                            for btn in row:
+                                keyboard_row.append(
+                                    InlineKeyboardButton(
+                                        text=btn["text"],
+                                        callback_data=btn["callback_data"]
+                                    )
+                                )
+                            keyboard.append(keyboard_row)
+                        markup = InlineKeyboardMarkup(keyboard)
+                await self._send_text(chat_id, chunk, reply_params, thread_kwargs, reply_markup=markup)
 
     async def _call_with_retry(self, fn, *args, **kwargs):
         """Call an async Telegram API function with retry on pool/network timeout."""
@@ -476,6 +495,7 @@ class TelegramChannel(BaseChannel):
         text: str,
         reply_params=None,
         thread_kwargs: dict | None = None,
+        reply_markup=None,
     ) -> None:
         """Send a plain text message with HTML fallback."""
         try:
@@ -484,6 +504,7 @@ class TelegramChannel(BaseChannel):
                 self._app.bot.send_message,
                 chat_id=chat_id, text=html, parse_mode="HTML",
                 reply_parameters=reply_params,
+                reply_markup=reply_markup,
                 **(thread_kwargs or {}),
             )
         except Exception as e:
@@ -494,6 +515,7 @@ class TelegramChannel(BaseChannel):
                     chat_id=chat_id,
                     text=text,
                     reply_parameters=reply_params,
+                    reply_markup=reply_markup,
                     **(thread_kwargs or {}),
                 )
             except Exception as e2:
@@ -606,6 +628,7 @@ class TelegramChannel(BaseChannel):
             "Các lệnh miniclaw là:\n"
             "/new — Bắt đầu một cuộc trò chuyện mới\n"
             "/stop — Dừng tác vụ hiện tại\n"
+            "/model — Chọn mô hình OpenRouter\n"
             "/restart — Khởi động lại bot\n"
             "/status — Hiển thị trạng thái bot\n"
             "/help — Hiển thị các lệnh có sẵn"
@@ -791,6 +814,46 @@ class TelegramChannel(BaseChannel):
             chat_id=str(message.chat_id),
             content=message.text or "",
             metadata=self._build_message_metadata(message, user),
+            session_key=self._derive_topic_session_key(message),
+        )
+
+    async def _on_callback_query(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Handle inline button clicks for model selection."""
+        query = update.callback_query
+        if not query or not query.data or not query.message or not update.effective_user:
+            return
+
+        try:
+            await query.answer()
+        except Exception as e:
+            logger.debug("Failed to answer callback query: {}", e)
+
+        data = query.data
+        if not data.startswith("model:"):
+            return
+
+        model_name = data.split("model:", 1)[1]
+        content = f"/model select {model_name}"
+
+        user = update.effective_user
+        message = query.message
+        self._remember_thread_context(message)
+
+        metadata = {
+            "message_id": message.message_id,
+            "user_id": user.id,
+            "username": user.username,
+            "first_name": user.first_name,
+            "is_group": message.chat.type != "private",
+            "message_thread_id": getattr(message, "message_thread_id", None),
+            "is_forum": bool(getattr(message.chat, "is_forum", False)),
+        }
+
+        await self._handle_message(
+            sender_id=self._sender_id(user),
+            chat_id=str(message.chat_id),
+            content=content,
+            metadata=metadata,
             session_key=self._derive_topic_session_key(message),
         )
 

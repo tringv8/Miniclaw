@@ -1,6 +1,6 @@
 ---
 name: summarize
-description: Summarize or extract text/transcripts from URLs, podcasts, and local files (great fallback for “transcribe this YouTube/video”).
+description: Tóm tắt hoặc trích xuất văn bản/transcript từ URLs, podcast, và tệp cục bộ (lựa chọn tốt để "chuyển ngữ YouTube/video").
 homepage: https://summarize.sh
 metadata: {"miniclaw":{"emoji":"🧾","requires":{"bins":["summarize"]},"install":[{"id":"brew","kind":"brew","formula":"steipete/tap/summarize","bins":["summarize"],"label":"Install summarize (brew)"}]}}
 ---
