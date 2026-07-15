@@ -1037,7 +1037,7 @@ def _get_bridge_dir() -> Path:
 
 @channels_app.command("login")
 def channels_login(
-    channel_name: str = typer.Argument(..., help="Tên kênh (Channel name) (e.g. weixin, whatsapp)"),
+    channel_name: str = typer.Argument(..., help="Tên kênh (Channel name) (e.g. telegram, web)"),
     force: bool = typer.Option(False, "--force", "-f", help="Bắt buộc xác thực lại ngay cả khi đã đăng nhập"),
 ):
     """Xác thực với một kênh thông qua mã QR hoặc đăng nhập tương tác khác."""

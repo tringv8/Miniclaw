@@ -15,7 +15,6 @@ import {
 } from "@/api/system"
 import {
   AgentSection,
-  AutoStartSection,
   ExecSection,
   GatewaySection,
   LauncherSection,
@@ -63,11 +62,7 @@ export function ConfigPage() {
     queryFn: getLauncherConfig,
   })
 
-  const {
-    data: autoStartStatus,
-    isLoading: isAutoStartLoading,
-    error: autoStartError,
-  } = useQuery({
+  const { data: autoStartStatus } = useQuery({
     queryKey: ["system", "autostart"],
     queryFn: getAutoStartStatus,
   })
@@ -103,11 +98,6 @@ export function ConfigPage() {
   const isDirty = configDirty || launcherDirty || autoStartDirty
 
   const autoStartSupported = autoStartStatus?.supported !== false
-  const autoStartHint = autoStartError
-    ? "Failed to load autostart state."
-    : !autoStartSupported
-      ? "Autostart is not available in this Python launcher yet."
-      : autoStartStatus?.message || "Changes apply on next login."
 
   const updateField = <K extends keyof CoreConfigForm>(
     key: K,
@@ -296,17 +286,6 @@ export function ConfigPage() {
                 launcherForm={launcherForm}
                 onFieldChange={updateLauncherField}
                 disabled={saving || isLauncherLoading}
-              />
-              <AutoStartSection
-                enabled={autoStartEnabled}
-                hint={autoStartHint}
-                disabled={
-                  isAutoStartLoading ||
-                  Boolean(autoStartError) ||
-                  !autoStartSupported ||
-                  saving
-                }
-                onChange={setAutoStartEnabled}
               />
 
               <div className="flex justify-end gap-2">

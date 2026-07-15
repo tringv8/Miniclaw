@@ -637,6 +637,14 @@ def _normalize_for_match(text: str) -> str:
     return re.sub(r"\s+", " ", ascii_text.lower())
 
 
+def _benchmark_field_label(line: str) -> str:
+    label = line.split(":", 1)[0]
+    label = _normalize_for_match(label).replace("*", "")
+    label = re.sub(r"^\s*[-*]\s*", "", label)
+    label = re.sub(r"^[^\w]+", "", label)
+    return label.strip()
+
+
 def _parse_benchmark_articles(text: str | None) -> list[dict[str, str]]:
     if not text:
         return []
@@ -663,35 +671,46 @@ def _parse_benchmark_articles(text: str | None) -> list[dict[str, str]]:
         summary_lines: list[str] = []
         in_summary = False
         for line in lines:
-            norm = _normalize_for_match(line)
-            if "link" in norm:
+            label = _benchmark_field_label(line)
+            if label.startswith("link"):
                 url_match = re.search(r"https?://\S+", line)
                 if url_match:
                     article["link"] = url_match.group(0).strip(").,] ")
                 in_summary = False
-            elif "tac gia" in norm:
+            elif label.startswith("tac gia"):
                 parts = line.split(":", 1)
                 if len(parts) > 1:
                     article["authors"] = parts[1].replace("**", "").strip()
                 in_summary = False
-            elif "ngay dang" in norm:
+            elif label.startswith("ngay dang"):
                 parts = line.split(":", 1)
                 if len(parts) > 1:
                     article["published"] = parts[1].replace("**", "").strip()
                 in_summary = False
-            elif "doi" in norm:
+            elif label.startswith("doi"):
                 parts = line.split(":", 1)
                 if len(parts) > 1:
                     article["doi"] = parts[1].replace("**", "").strip()
                 in_summary = False
-            elif "tom tat" in norm or "abstract" in norm or "tóm tắt" in line.lower():
+            elif label.startswith("tom tat") or label.startswith("abstract"):
                 parts = line.split(":", 1)
                 inline_summary = (parts[1] if len(parts) > 1 else "").replace("**", "").strip()
                 if inline_summary:
                     summary_lines.append(inline_summary)
                 in_summary = True
-            elif in_summary and re.match(r"^\s*[-*]\s+", line):
-                summary_lines.append(re.sub(r"^\s*[-*]\s+", "", line).strip())
+            elif in_summary:
+                stripped = line.strip()
+                if not stripped:
+                    continue
+                if re.match(r"^\s*(?:---+|___+|\*\*\*+)\s*$", stripped):
+                    in_summary = False
+                    continue
+                if re.match(r"^\s*(?:\*\*)?\[?\d+\]?\.\s+", line):
+                    in_summary = False
+                    continue
+                summary_line = re.sub(r"^\s*[-*]\s+", "", line).replace("**", "").strip()
+                if summary_line:
+                    summary_lines.append(summary_line)
             elif line.strip():
                 in_summary = False
         if summary_lines:

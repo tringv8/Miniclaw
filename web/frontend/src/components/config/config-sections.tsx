@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import { useTranslation } from "react-i18next"
 
 import {
   type CoreConfigForm,
@@ -14,7 +15,6 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { useTranslation } from "react-i18next"
 
 type UpdateCoreField = <K extends keyof CoreConfigForm>(
   key: K,
@@ -232,10 +232,7 @@ interface GatewaySectionProps {
   onFieldChange: UpdateCoreField
 }
 
-export function GatewaySection({
-  form,
-  onFieldChange,
-}: GatewaySectionProps) {
+export function GatewaySection({ form, onFieldChange }: GatewaySectionProps) {
   const { t } = useTranslation()
   return (
     <ConfigSectionCard
@@ -267,7 +264,6 @@ export function GatewaySection({
           onChange={(e) => onFieldChange("gatewayPort", e.target.value)}
         />
       </Field>
-
     </ConfigSectionCard>
   )
 }
@@ -361,20 +357,6 @@ export function LauncherSection({
           value={launcherForm.port}
           disabled={disabled}
           onChange={(e) => onFieldChange("port", e.target.value)}
-        />
-      </Field>
-
-      <Field
-        label={t("pages.config.launcher_cidrs_label")}
-        hint={t("pages.config.launcher_cidrs_hint")}
-        layout="setting-row"
-      >
-        <Textarea
-          value={launcherForm.allowedCIDRsText}
-          disabled={disabled}
-          placeholder="127.0.0.1/32"
-          className="min-h-[88px]"
-          onChange={(e) => onFieldChange("allowedCIDRsText", e.target.value)}
         />
       </Field>
     </ConfigSectionCard>

@@ -60,7 +60,7 @@ class MessageTool(Tool):
                 },
                 "channel": {
                     "type": "string",
-                    "description": "Optional: target channel (telegram, discord, etc.)"
+                    "description": "Optional: target channel (telegram, web, or plugin channel name)"
                 },
                 "chat_id": {
                     "type": "string",

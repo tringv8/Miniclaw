@@ -1,16 +1,10 @@
 import { PageHeader } from "@/components/page-header"
+import { useCredentialsPage } from "@/hooks/use-credentials-page"
 
 import { DeviceCodeSheet } from "./device-code-sheet"
 import { LogoutConfirmDialog } from "./logout-confirm-dialog"
 import { OpenAICredentialCard } from "./openai-credential-card"
-import { GeminiCredentialCard } from "./gemini-credential-card"
-import { GithubCopilotCredentialCard } from "./github-copilot-credential-card"
-import { AnthropicCredentialCard } from "./anthropic-credential-card"
-import { KimiCredentialCard } from "./kimi-credential-card"
-import { DeepseekCredentialCard } from "./deepseek-credential-card"
 import { OpenrouterCredentialCard } from "./openrouter-credential-card"
-import { OllamaCredentialCard } from "./ollama-credential-card"
-import { useCredentialsPage } from "@/hooks/use-credentials-page"
 
 export function CredentialsPage() {
   const {
@@ -19,41 +13,19 @@ export function CredentialsPage() {
     activeAction,
     flowHint,
     openAIToken,
-    anthropicToken,
-    geminiToken,
-    kimiToken,
-    deepseekToken,
     openrouterToken,
-    ollamaBase,
-    ollamaUsername,
-    ollamaPassword,
     openaiStatus,
-    geminiStatus,
-    copilotStatus,
-    anthropicStatus,
-    kimiStatus,
-    deepseekStatus,
     openrouterStatus,
-    ollamaStatus,
     logoutDialogOpen,
     logoutProviderLabel,
     deviceSheetOpen,
     deviceFlow,
     setOpenAIToken,
-    setAnthropicToken,
-    setGeminiToken,
-    setKimiToken,
-    setDeepseekToken,
     setOpenrouterToken,
-    setOllamaBase,
-    setOllamaUsername,
-    setOllamaPassword,
     startBrowserOAuth,
     startOpenAIDeviceCode,
-    startCopilotDeviceCode,
     stopLoading,
     saveToken,
-    saveOllamaLocal,
     askLogout,
     handleConfirmLogout,
     handleLogoutDialogOpenChange,
@@ -93,54 +65,6 @@ export function CredentialsPage() {
               onAskLogout={() => askLogout("openai")}
             />
 
-            <GeminiCredentialCard
-              status={geminiStatus}
-              activeAction={activeAction}
-              token={geminiToken}
-              onTokenChange={setGeminiToken}
-              onStartBrowserOAuth={() => void startBrowserOAuth("gemini")}
-              onStopLoading={stopLoading}
-              onSaveToken={() => void saveToken("gemini", geminiToken)}
-              onAskLogout={() => askLogout("gemini")}
-            />
-
-            <GithubCopilotCredentialCard
-              status={copilotStatus}
-              activeAction={activeAction}
-              onStartDeviceCode={() => void startCopilotDeviceCode()}
-              onAskLogout={() => askLogout("github_copilot")}
-            />
-
-            <AnthropicCredentialCard
-              status={anthropicStatus}
-              activeAction={activeAction}
-              token={anthropicToken}
-              onTokenChange={setAnthropicToken}
-              onStopLoading={stopLoading}
-              onSaveToken={() => void saveToken("anthropic", anthropicToken)}
-              onAskLogout={() => askLogout("anthropic")}
-            />
-
-            <KimiCredentialCard
-              status={kimiStatus}
-              activeAction={activeAction}
-              token={kimiToken}
-              onTokenChange={setKimiToken}
-              onStopLoading={stopLoading}
-              onSaveToken={() => void saveToken("moonshot", kimiToken)}
-              onAskLogout={() => askLogout("moonshot")}
-            />
-
-            <DeepseekCredentialCard
-              status={deepseekStatus}
-              activeAction={activeAction}
-              token={deepseekToken}
-              onTokenChange={setDeepseekToken}
-              onStopLoading={stopLoading}
-              onSaveToken={() => void saveToken("deepseek", deepseekToken)}
-              onAskLogout={() => askLogout("deepseek")}
-            />
-
             <OpenrouterCredentialCard
               status={openrouterStatus}
               activeAction={activeAction}
@@ -149,19 +73,6 @@ export function CredentialsPage() {
               onStopLoading={stopLoading}
               onSaveToken={() => void saveToken("openrouter", openrouterToken)}
               onAskLogout={() => askLogout("openrouter")}
-            />
-
-            <OllamaCredentialCard
-              status={ollamaStatus}
-              activeAction={activeAction}
-              apiBase={ollamaBase}
-              onApiBaseChange={setOllamaBase}
-              username={ollamaUsername}
-              onUsernameChange={setOllamaUsername}
-              password={ollamaPassword}
-              onPasswordChange={setOllamaPassword}
-              onSave={() => void saveOllamaLocal(ollamaBase, ollamaUsername, ollamaPassword)}
-              onAskLogout={() => askLogout("ollama")}
             />
           </div>
         )}

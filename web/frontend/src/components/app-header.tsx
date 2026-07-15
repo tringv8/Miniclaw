@@ -210,7 +210,7 @@ export function AppHeader() {
 
         <Button variant="ghost" size="icon" className="size-8" asChild>
           <a
-            href="https://github.com/tringv8/miniclaw/tree/main/docs"
+            href="https://github.com/tringv8/Miniclaw/blob/main/docs/huongdansudung.md"
             target="_blank"
             rel="noreferrer"
           >

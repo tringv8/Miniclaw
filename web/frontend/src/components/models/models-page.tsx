@@ -35,6 +35,8 @@ const PROVIDER_PRIORITY: Record<string, number> = {
   mimo: 19,
 }
 
+const VISIBLE_PROVIDER_KEYS = new Set(["openai", "openrouter"])
+
 interface ProviderGroup {
   key: string
   label: string
@@ -55,7 +57,6 @@ export function ModelsPage() {
   const [settingDefaultIndex, setSettingDefaultIndex] = useState<number | null>(
     null,
   )
-
 
   const fetchModels = useCallback(async () => {
     try {
@@ -97,6 +98,10 @@ export function ModelsPage() {
   const grouped: Record<string, { label: string; models: ModelInfo[] }> = {}
   for (const model of models) {
     const providerKey = getProviderKey(model.model)
+    if (!VISIBLE_PROVIDER_KEYS.has(providerKey)) {
+      continue
+    }
+
     if (!grouped[providerKey]) {
       grouped[providerKey] = {
         label: getProviderLabel(model.model),
@@ -161,7 +166,6 @@ export function ModelsPage() {
           <p className="text-muted-foreground mt-1 text-sm">
             {t("models.description")}
           </p>
-
         </div>
 
         {loading && (
