@@ -7,7 +7,7 @@ x-common-config: &common-config
       MINICLAW_REPO: ${MINICLAW_REPO:-https://github.com/tringv8/Miniclaw.git}
       MINICLAW_REF: ${MINICLAW_REF:-main}
   volumes:
-    - miniclaw-data:/root/.miniclaw
+    - C:\Users\admin\.miniclaw:/root/.miniclaw # Bind mount: dùng thẳng thư mục trên máy thật
   env_file:
     - .env
 
@@ -15,24 +15,21 @@ services:
   miniclaw-launcher:
     container_name: miniclaw-launcher
     <<: *common-config
-    entrypoint: ["miniclaw-launcher"]
-    command: ["--public", "--no-browser", "--port", "18801"]
+    entrypoint: [ "miniclaw-launcher" ]
+    command: [ "--public", "--no-browser", "--port", "18801" ]
     restart: unless-stopped
     ports:
       - 18801:18801
-      - 18790:18790   # Gateway port (managed via web UI)
-      - 1455:1455     # OAuth local callback server
+      - 18790:18790 # Gateway port (managed via web UI)
+      - 1455:1455 # OAuth local callback server
     volumes:
-      - miniclaw-data:/root/.miniclaw
-      - ./secrets:/root/.miniclaw/workspace/secrets  # Đặt file JSON Google vào thư mục này
+      - C:/Users/admin/.miniclaw:/root/.miniclaw
+      - ./secrets:/root/.miniclaw/workspace/secrets # Đặt file JSON Google vào thư mục này
 
   miniclaw-cli:
     <<: *common-config
     profiles:
       - cli
-    command: ["status"]
+    command: [ "status" ]
     stdin_open: true
     tty: true
-
-volumes:
-  miniclaw-data:
