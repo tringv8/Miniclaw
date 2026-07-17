@@ -1,5 +1,6 @@
 import {
   IconDownload,
+  IconHistory,
   IconPencil,
   IconPlayerPause,
   IconPlayerPlay,
@@ -15,6 +16,7 @@ import {
   getBenchmarkConfig,
   getBenchmarkModels,
   getBenchmarkResults,
+  getBenchmarkRuns,
   getBenchmarkStatus,
   pauseBenchmark,
   resumeBenchmark,
@@ -25,6 +27,7 @@ import {
   type BenchmarkMetricKey,
   type BenchmarkModel,
   type BenchmarkResult,
+  type BenchmarkRun,
 } from "@/api/llm-benchmark"
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
@@ -150,9 +153,28 @@ function buildPivotRows(
   return rows
 }
 
+function formatRunTime(value?: string): string {
+  if (!value) return "Dang chay"
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleString()
+}
+
+function shortRunId(runId: string): string {
+  return runId ? runId.slice(0, 8) : ""
+}
+
+function runStatusLabel(status: BenchmarkRun["status"]): string {
+  if (status === "running") return "Dang chay"
+  if (status === "completed_with_errors") return "Co loi"
+  return "Hoan thanh"
+}
+
 export function LlmBenchmarkPage() {
   const [iterations, setIterations] = React.useState(30)
   const [selectedModelIds, setSelectedModelIds] = React.useState<number[]>([])
+  const [selectedRunId, setSelectedRunId] = React.useState<string | null>(null)
+  const [historyOpen, setHistoryOpen] = React.useState(false)
   const [rawOpen, setRawOpen] = React.useState(false)
   const [configOpen, setConfigOpen] = React.useState(false)
   const [rawActiveModelId, setRawActiveModelId] = React.useState<number | null>(null)
@@ -166,7 +188,9 @@ export function LlmBenchmarkPage() {
     refetchInterval: (query) => (query.state.data?.running ? 1500 : 4000),
   })
   const status = statusQuery.data
-  const runId = status?.running ? status.run_id || undefined : undefined
+  const activeRunId = status?.running
+    ? status.run_id || selectedRunId || undefined
+    : selectedRunId || undefined
 
   const modelsQuery = useQuery({
     queryKey: ["llm-benchmark-models"],
@@ -177,6 +201,15 @@ export function LlmBenchmarkPage() {
   const configQuery = useQuery({
     queryKey: ["llm-benchmark-config"],
     queryFn: getBenchmarkConfig,
+  })
+
+  const runsQuery = useQuery({
+    queryKey: ["llm-benchmark-runs"],
+    queryFn: getBenchmarkRuns,
+    refetchInterval: (query) =>
+      status?.running || query.state.data?.runs.some((run) => run.status === "running")
+        ? 4000
+        : false,
   })
   const benchmarkConfig = configQuery.data ?? DEFAULT_BENCHMARK_CONFIG
   const visibleMetrics = METRIC_DEFINITIONS.filter(
@@ -197,16 +230,19 @@ export function LlmBenchmarkPage() {
   }, [benchmarkModels])
 
   const resultsQuery = useQuery({
-    queryKey: ["llm-benchmark-results", runId],
-    queryFn: () => getBenchmarkResults(runId),
+    queryKey: ["llm-benchmark-results", activeRunId],
+    queryFn: () => getBenchmarkResults(activeRunId),
     refetchInterval: status?.running ? 1500 : false,
   })
 
   const startMutation = useMutation({
     mutationFn: (payload: { iterations: number; modelIds: number[] }) =>
       startBenchmark(payload.iterations, payload.modelIds),
-    onSuccess: async () => {
-      await Promise.all([statusQuery.refetch(), resultsQuery.refetch()])
+    onSuccess: async (started) => {
+      setSelectedRunId(started.run_id)
+      setHistoryOpen(false)
+      setRawOpen(false)
+      await Promise.all([statusQuery.refetch(), runsQuery.refetch()])
     },
   })
 
@@ -227,6 +263,12 @@ export function LlmBenchmarkPage() {
 
   const results = resultsQuery.data?.results ?? []
   const summary = resultsQuery.data?.summary ?? []
+  const runs = runsQuery.data?.runs ?? []
+  const activeRun = activeRunId
+    ? runs.find((run) => run.run_id === activeRunId)
+    : runs[0]
+  const isViewingHistoricalRun =
+    Boolean(activeRunId) && (!status?.running || activeRunId !== status.run_id)
   const displayedSelectedModelIds = status?.running
     ? (status.selected_model_ids ?? selectedModelIds)
     : selectedModelIds
@@ -236,7 +278,7 @@ export function LlmBenchmarkPage() {
       : 0
   const pivotIterations = status?.running
     ? (status.iterations || inferredRunningIterations)
-    : 0
+    : activeRun?.iterations || 0
   const pivotRows = React.useMemo(
     () => buildPivotRows(results, benchmarkModels, pivotIterations, summary),
     [results, benchmarkModels, pivotIterations, summary]
@@ -323,7 +365,7 @@ export function LlmBenchmarkPage() {
                 disabled={!canExport}
                 onClick={() => {
                   if (canExport) {
-                    globalThis.location.assign(benchmarkCsvUrl(runId))
+                    globalThis.location.assign(benchmarkCsvUrl(activeRunId))
                   }
                 }}
               >
@@ -335,12 +377,19 @@ export function LlmBenchmarkPage() {
                 disabled={!canExport}
                 onClick={() => {
                   if (canExport) {
-                    globalThis.location.assign(benchmarkExcelUrl(runId))
+                    globalThis.location.assign(benchmarkExcelUrl(activeRunId))
                   }
                 }}
               >
                 <IconDownload className="size-4" />
                 Xuat Excel
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setHistoryOpen((value) => !value)}
+              >
+                <IconHistory className="size-4" />
+                Lich su do
               </Button>
               <Button
                 variant="outline"
@@ -417,6 +466,23 @@ export function LlmBenchmarkPage() {
           />
         )}
 
+        {historyOpen && (
+          <BenchmarkRunHistoryPanel
+            runs={runs}
+            activeRunId={activeRun?.run_id}
+            canShowLatest={Boolean(selectedRunId)}
+            isLoading={runsQuery.isLoading}
+            onSelectRun={(runId) => {
+              setSelectedRunId(runId)
+              setRawOpen(false)
+            }}
+            onShowLatest={() => {
+              setSelectedRunId(null)
+              setRawOpen(false)
+            }}
+          />
+        )}
+
         <section className="border-border bg-background rounded-lg border">
           <div className="border-b px-4 py-3">
             <div className="flex items-center justify-between gap-4 text-sm">
@@ -439,7 +505,14 @@ export function LlmBenchmarkPage() {
 
         <section className="border-border bg-background min-h-0 rounded-lg border">
           <div className="border-b px-4 py-3">
-            <h2 className="text-sm font-semibold">Bang ket qua</h2>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold">Bang ket qua</h2>
+              <span className="text-muted-foreground text-xs">
+                {activeRun?.run_id
+                  ? `${isViewingHistoricalRun ? "Dang xem lich su" : "Lan moi nhat"} #${shortRunId(activeRun.run_id)}`
+                  : "Chua co lan do"}
+              </span>
+            </div>
           </div>
           <div className="overflow-auto">
             <table className="w-full min-w-[1800px] border-collapse text-sm">
@@ -524,14 +597,98 @@ export function LlmBenchmarkPage() {
             models={benchmarkModels}
             activeModelId={rawActiveModelId}
             metricConfig={benchmarkConfig}
-            iterationCount={status?.iterations || iterations}
-            runId={runId}
+            iterationCount={activeRun?.iterations || status?.iterations || iterations}
+            runId={activeRunId}
             onSelectModel={setRawActiveModelId}
             onSaved={() => resultsQuery.refetch()}
           />
         )}
       </div>
     </div>
+  )
+}
+
+function BenchmarkRunHistoryPanel({
+  runs,
+  activeRunId,
+  canShowLatest,
+  isLoading,
+  onSelectRun,
+  onShowLatest,
+}: {
+  runs: BenchmarkRun[]
+  activeRunId?: string
+  canShowLatest: boolean
+  isLoading: boolean
+  onSelectRun: (runId: string) => void
+  onShowLatest: () => void
+}) {
+  return (
+    <section className="border-border bg-background rounded-lg border">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3">
+        <div>
+          <h2 className="text-sm font-semibold">Lich su do</h2>
+          <p className="text-muted-foreground mt-1 text-xs">
+            Moi lan chay duoc luu rieng theo run_id, khong ghi de ket qua cu.
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={onShowLatest} disabled={!canShowLatest}>
+          Xem lan moi nhat
+        </Button>
+      </div>
+
+      <div className="grid gap-2 p-4">
+        {isLoading ? (
+          <p className="text-muted-foreground text-sm">Dang tai lich su do...</p>
+        ) : null}
+        {!isLoading && runs.length === 0 ? (
+          <p className="text-muted-foreground text-sm">Chua co lich su do.</p>
+        ) : null}
+        {runs.map((run) => {
+          const isActive = activeRunId === run.run_id
+          const modelText = run.model_names.length
+            ? run.model_names.join(", ")
+            : run.model_ids.join(", ")
+          return (
+            <div
+              key={run.run_id}
+              className={[
+                "border-border grid gap-3 rounded-md border p-3 lg:grid-cols-[1.2fr_1fr_auto] lg:items-center",
+                isActive ? "bg-muted/60" : "bg-background",
+              ].join(" ")}
+            >
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-mono text-sm font-medium">
+                    #{shortRunId(run.run_id)}
+                  </span>
+                  <span className="bg-muted text-muted-foreground rounded px-2 py-0.5 text-xs">
+                    {runStatusLabel(run.status)}
+                  </span>
+                </div>
+                <p className="text-muted-foreground mt-1 truncate text-xs">
+                  {formatRunTime(run.started_at)}
+                </p>
+              </div>
+              <div className="min-w-0 text-xs">
+                <p className="truncate">{modelText || "Chua co model"}</p>
+                <p className="text-muted-foreground mt-1">
+                  {run.iterations} lan thu, {run.result_count} dong ket qua
+                  {run.error_count ? `, ${run.error_count} loi` : ""}
+                </p>
+              </div>
+              <Button
+                variant={isActive ? "secondary" : "outline"}
+                size="sm"
+                onClick={() => onSelectRun(run.run_id)}
+              >
+                {isActive ? "Dang xem" : "Xem ket qua"}
+              </Button>
+            </div>
+          )
+        })}
+      </div>
+    </section>
   )
 }
 

@@ -63,6 +63,22 @@ export interface BenchmarkModelsResponse {
   models: BenchmarkModel[]
 }
 
+export interface BenchmarkRun {
+  run_id: string
+  started_at: string
+  updated_at: string
+  iterations: number
+  result_count: number
+  model_ids: number[]
+  model_names: string[]
+  status: "running" | "completed" | "completed_with_errors"
+  error_count: number
+}
+
+export interface BenchmarkRunsResponse {
+  runs: BenchmarkRun[]
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await launcherFetch(path, options)
   if (!res.ok) {
@@ -102,6 +118,10 @@ export async function startBenchmark(
 
 export async function getBenchmarkModels(): Promise<BenchmarkModelsResponse> {
   return request<BenchmarkModelsResponse>("/api/llm-benchmark/models")
+}
+
+export async function getBenchmarkRuns(): Promise<BenchmarkRunsResponse> {
+  return request<BenchmarkRunsResponse>("/api/llm-benchmark/runs")
 }
 
 export async function getBenchmarkStatus(): Promise<BenchmarkStatus> {

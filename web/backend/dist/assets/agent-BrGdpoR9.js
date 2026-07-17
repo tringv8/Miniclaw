@@ -1,1 +1,0 @@
-import{t as e}from"./jsx-runtime-Bg_NI1en.js";import{G as t,K as n,W as r}from"./index-BUk9Koha.js";var i=e();function a(){return r({select:e=>e.location.pathname})===`/agent`?(0,i.jsx)(n,{to:`/agent/skills`}):(0,i.jsx)(t,{})}export{a as component};

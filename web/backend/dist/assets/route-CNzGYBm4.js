@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-Bg_NI1en.js";import{G as t,K as n,W as r}from"./index-B3O8nZuV.js";var i=e();function a(){return r({select:e=>e.location.pathname})===`/channels`?(0,i.jsx)(n,{to:`/channels/$name`,params:{name:`telegram`}}):(0,i.jsx)(t,{})}export{a as component};
